@@ -17,19 +17,7 @@ export const metadata: Metadata = {
   },
   description:
     "Application ludique gratuite pour réviser les tables de multiplication. Outil éducatif interactif pour enfants et étudiants. Développé par Gravitek.",
-  keywords: [
-    "tables de multiplication",
-    "mathématiques",
-    "éducation",
-    "enfants",
-    "révisions",
-    "apprentissage",
-    "gratuit",
-    "exercices",
-    "multiplication",
-    "calcul mental",
-  ],
-  authors: [{ name: "Gravitek", url: "https://gravitek.io" }],
+  authors: [{ name: "Gravitek" }],
   creator: "Gravitek",
   publisher: "Gravitek",
   robots: {
