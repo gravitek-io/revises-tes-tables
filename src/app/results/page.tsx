@@ -4,7 +4,7 @@
 import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { Home, RotateCcw, Target, Clock, Award, TrendingUp, Frown, Smile } from 'lucide-react'
+import { Home, RotateCcw, Target, TrendingUp, Frown, Smile } from 'lucide-react'
 import { GameEngine } from '@/lib/game'
 import { GameSession, Question } from '@/types'
 

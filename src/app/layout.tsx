@@ -4,8 +4,6 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { ToastContainer } from "react-toastify";
 import Script from "next/script";
-import "react-toastify/dist/ReactToastify.css";
-import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"] });
 
