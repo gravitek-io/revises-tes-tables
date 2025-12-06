@@ -4,7 +4,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Clock, Target, Check, X, Zap } from "lucide-react";
+import { ArrowLeft, Zap } from "lucide-react";
 import { toast } from "react-toastify";
 import { GameStorage } from "@/lib/storage";
 import { GameEngine } from "@/lib/game";
