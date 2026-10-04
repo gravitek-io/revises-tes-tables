@@ -2,7 +2,8 @@ name: Fetch secrets from Infisical
 description: >
   Installs a pinned, checksum-verified Infisical CLI, authenticates with a
   machine identity (Universal Auth) and exports one folder into GITHUB_ENV with
-  log masking. Fails if a required key is missing.
+  log masking. Fails if a required key is missing. The Infisical project
+  defaults to the shared "Gravitek.io" project (its ID is not a secret).
 
 inputs:
   client-id:
@@ -14,6 +15,10 @@ inputs:
   required-keys:
     description: Space-separated list of keys that must be present in the folder.
     required: true
+  project-id:
+    description: Infisical project ID holding the folder.
+    required: false
+    default: 358e7cc0-a204-47d6-9be7-32579c92dc60
   path:
     description: Infisical folder to export.
     required: false
@@ -52,6 +57,7 @@ runs:
         INFISICAL_UNIVERSAL_AUTH_CLIENT_ID: ${{ inputs.client-id }}
         INFISICAL_UNIVERSAL_AUTH_CLIENT_SECRET: ${{ inputs.client-secret }}
         INFISICAL_DOMAIN: ${{ inputs.domain }}
+        INFISICAL_PROJECT_ID: ${{ inputs.project-id }}
         INFISICAL_ENV: ${{ inputs.environment }}
         INFISICAL_PATH: ${{ inputs.path }}
         REQUIRED_KEYS: ${{ inputs.required-keys }}
