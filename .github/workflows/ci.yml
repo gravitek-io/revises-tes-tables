@@ -4,6 +4,13 @@
 # The Terraform plan needs the Scaleway CI key from Infisical. Dependabot and
 # fork PRs cannot read repository secrets, so the plan is skipped for them and
 # the summary says so; lint, build, image scan, fmt and validate still run.
+#
+# Accepted trade-off: PRs from same-repo branches do receive the Infisical
+# credential, hence the Scaleway CI key. Only accounts with write access can
+# push such branches, and they could equally edit deploy.yml on main. If
+# external contributors are ever granted write access, switch the plan to a
+# read-only Scaleway key stored in a separate Infisical folder and machine
+# identity.
 name: CI
 
 on:
@@ -76,6 +83,7 @@ jobs:
           ignore-unfixed: true
 
       - name: Smoke test the image
+        shell: bash
         run: |
           docker run -d --rm --name smoke -p 8080:8080 "$LOCAL_IMAGE_TAG"
           scripts/smoke-test.sh http://localhost:8080
@@ -126,6 +134,8 @@ jobs:
         env:
           AWS_ACCESS_KEY_ID: ${{ env.SCW_ACCESS_KEY }}
           AWS_SECRET_ACCESS_KEY: ${{ env.SCW_SECRET_KEY }}
+        # Explicit shell enables pipefail, so a failed plan is not masked by tee.
+        shell: bash
         run: |
           terraform init -reconfigure
           terraform plan -lock=false -no-color | tee plan.txt
