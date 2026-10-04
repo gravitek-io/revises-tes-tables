@@ -18,6 +18,12 @@ RUN npm run build
 # ---- Stage 2: serve with nginx (non-root, port 8080) ----------------------
 FROM nginxinc/nginx-unprivileged:alpine-slim@sha256:c81a27f28bc2d9c2da8998444e653c7b85b9bbbaa92e44ef18d8920784e06507
 
+# Apply Alpine security updates (the pinned digest may lag behind fixed CVEs
+# such as pcre2 10.49). apk needs root; drop back to the image's nginx user.
+USER root
+RUN apk upgrade --no-cache
+USER nginx
+
 COPY docker/nginx.conf /etc/nginx/nginx.conf
 COPY docker/security-headers.conf /etc/nginx/snippets/security-headers.conf
 COPY --from=builder /app/out /usr/share/nginx/html
