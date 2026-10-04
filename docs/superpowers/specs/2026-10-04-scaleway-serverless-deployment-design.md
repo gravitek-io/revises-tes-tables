@@ -131,7 +131,7 @@ Single root module. Files:
 
 `scaleway_container` settings:
 
-- `image = "${registry endpoint}/${app_name}:${var.image_tag}"` — immutable tag
+- `image = "${registry endpoint}/web:${var.image_tag}"` — immutable tag
   equal to the git SHA; a tag change triggers a redeploy, rollback is a tag change.
 - `port = 8080`, `protocol = "http1"`, `privacy = "public"`.
 - `min_scale = 0`, `max_scale = 2`.
@@ -276,7 +276,15 @@ Documented in `infra/README.md`:
 - **CI on PR:** lint, build, Docker build, `terraform validate` and `plan`.
 - **CI on main:** post-deploy smoke test on the public URL.
 
-## 7. Out of scope / follow-ups
+## 7. Prerequisite discovered during planning
+
+`npm ci` fails on `main` (2026-10-04): Dependabot merged TypeScript 7, rejected by
+typescript-eslint's peer range (`< 6.1.0`), and Tailwind 4 while the config and CSS use
+the v3 syntax. The implementation plan starts by pinning TypeScript `^5.9.3` and
+Tailwind `^3.4.17` (verified to resolve) and tells Dependabot to ignore major updates of
+both until a deliberate migration. Without this, every CI job would fail at `npm ci`.
+
+## 8. Out of scope / follow-ups
 
 - Unit test layer for the application (required by project conventions, absent
   today). Suggested as the next change so CI can run `npm test`.
