@@ -8,3 +8,10 @@ node_modules
 .DS_Store
 SPECS.md 
 out
+# Terraform local artefacts (state is remote, lock file IS committed)
+infra/.terraform/
+infra/*.tfstate
+infra/*.tfstate.*
+infra/*.tfplan
+infra/*.tfvars
+infra/.terraform.tfstate.lock.info
