@@ -82,7 +82,7 @@ while read -r key_b64 value_b64; do
     exit 1
   fi
   case "${key}" in
-    PATH | BASH_ENV | NODE_OPTIONS | LD_* | GITHUB_* | RUNNER_* | ACTIONS_* | INPUT_*)
+    PATH | BASH_ENV | ENV | BASHOPTS | SHELLOPTS | PS4 | NODE_OPTIONS | NODE_PATH | HOME | LD_* | *_PROXY | GITHUB_* | RUNNER_* | ACTIONS_* | INPUT_*)
       echo "::error title=Invalid secret name::${key} is reserved and cannot be exported to the job environment."
       exit 1
       ;;
@@ -90,7 +90,12 @@ while read -r key_b64 value_b64; do
   # Mask line by line: the runner masks per line, so a multi-line secret must
   # register each of its lines.
   while IFS= read -r masked_line || [ -n "${masked_line}" ]; do
-    [ -n "${masked_line}" ] && echo "::add-mask::${masked_line}"
+    [ -n "${masked_line}" ] || continue
+    # Escape for the workflow-command parser (which unescapes %25 and %0D) so
+    # it registers the raw value; GITHUB_ENV below still gets the raw value.
+    m="${masked_line//%/%25}"
+    m="${m//$'\r'/%0D}"
+    echo "::add-mask::${m}"
   done <<< "${value}"
   keys+=("${key}")
   values+=("${value}")

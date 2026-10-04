@@ -100,6 +100,8 @@ jobs:
       # Exposed at job level so steps can test its presence in `if:`
       # (the `secrets` context is not available in step-level `if:`).
       INFISICAL_CLIENT_ID: ${{ secrets.INFISICAL_CLIENT_ID }}
+      # On pull_request, github.sha is the merge commit; the tag only has to be
+      # a valid value for the plan, it is never pushed.
       TF_VAR_image_tag: ${{ github.sha }}
       TF_IN_AUTOMATION: "true"
       TF_INPUT: "0"

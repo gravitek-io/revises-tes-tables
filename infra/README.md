@@ -92,15 +92,25 @@ Infisical. They are done once; nothing here is stored in GitHub.
 
 ## First deploy and DNS cutover
 
-1. Merge the deployment PR, then run the first deploy without the custom domain
-   (the CNAME cannot exist before the container endpoint is known):
+1. Merge the deployment PR. The merge pushes to `main`, which immediately runs
+   `deploy.yml` on its normal path (`enable_custom_domain=true`). That run creates
+   the registry, the namespace and the container, then fails at the custom domain
+   binding because the CNAME still points at Vercel; the provider retries DNS
+   resolution for up to 10 minutes before giving up. Cancel this automatic run from
+   the Actions tab as soon as it starts, or let it fail (harmless: the failed
+   binding is not kept). Then run the first deploy without the custom domain (the
+   CNAME cannot exist before the container endpoint is known):
 
    ```bash
    gh workflow run deploy.yml --repo Gravitek-io/revises-tes-tables -f bootstrap=true
    ```
 
-2. When the run is green, read the native endpoint from the run summary or, with the
-   credentials exported as in the section "Running Terraform locally" below, with:
+   Do not dispatch `bootstrap=true` once the domain is bound: it destroys the
+   binding until the next normal run.
+
+2. When the run is green, read the CNAME target from the run summary ("CNAME target
+   (Infomaniak)") or, with the credentials exported as in the section "Running
+   Terraform locally" below, with:
 
    ```bash
    cd infra && terraform init && terraform output -raw container_endpoint
@@ -170,7 +180,8 @@ S3 lockfile protects the state, but the pipeline owns the image tag.
   produce `SCW_SECRET_KEY`. Read the "Fetch secrets from Infisical" step first; it
   names the missing key or the failed login.
 - **`scaleway_container_domain` fails to create**: the CNAME does not resolve yet.
-  Re-run the deploy with `bootstrap=true`, fix DNS, then run normally.
+  Re-run the deploy with `bootstrap=true` (this removes an existing binding), fix
+  DNS, then run normally.
 - **Container stuck in `error`**: logs are in the Scaleway console → Serverless →
   Containers → the container → Logs (Cockpit). The current status can be read with
   `scw container container get <id> region=fr-par`.

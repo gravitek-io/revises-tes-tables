@@ -13,7 +13,10 @@
 #   - image_tag: redeploy an existing tag (rollback). Build and push are skipped.
 #   - bootstrap: first deploy only. Skips the custom domain binding because the
 #     CNAME at Infomaniak cannot exist before the container endpoint is known.
-#     See infra/README.md.
+#     See infra/README.md. The first push-triggered run (merge to main) fails at
+#     the domain binding because the CNAME does not exist yet: cancel or ignore
+#     it. Dispatching bootstrap=true once the domain is already bound destroys
+#     the binding until the next normal run.
 #
 # Secrets: Infisical (eu.infisical.com, env prod, path /REVISES-TES-TABLES) is
 # the source of truth. GitHub holds only INFISICAL_CLIENT_ID /
@@ -31,7 +34,7 @@ on:
         required: false
         type: string
       bootstrap:
-        description: "First deploy: skip the custom domain binding (create the CNAME afterwards, then run again without this flag)."
+        description: "First deploy: skip the custom domain binding (the CNAME cannot exist before the container does). WARNING: on an already bound domain this destroys the binding until the next normal run."
         required: false
         type: boolean
         default: false
@@ -142,11 +145,13 @@ jobs:
           public_url="$(terraform output -raw public_url)"
           ../scripts/smoke-test.sh "$native_url"
           if [ "$public_url" != "$native_url" ]; then
-            ../scripts/smoke-test.sh "$public_url"
+            # Certificate issuance after the first binding can take minutes.
+            SMOKE_RETRIES=36 ../scripts/smoke-test.sh "$public_url"
           fi
           {
             echo "## Deployed"
             echo "- image: \`${IMAGE}:${TF_VAR_image_tag}\`"
             echo "- native URL: ${native_url}"
             echo "- public URL: ${public_url}"
+            echo "- CNAME target (Infomaniak): $(terraform output -raw container_endpoint)"
           } >> "$GITHUB_STEP_SUMMARY"

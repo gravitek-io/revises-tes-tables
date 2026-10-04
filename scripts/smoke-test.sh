@@ -8,10 +8,13 @@
 # Checks the behaviours a visitor depends on: health endpoint, pages with and
 # without trailing slash (the sitemap links without it), 404 handling, cache
 # and security headers. Exit code 0 on success, 1 on the first failure.
+#
+# SMOKE_RETRIES overrides the number of 5-second readiness retries, default 12.
 set -euo pipefail
 
 BASE="${1:?usage: $0 <base-url>}"
 BASE="${BASE%/}"
+RETRIES="${SMOKE_RETRIES:-12}"
 
 HEADERS="$(mktemp)"
 trap 'rm -f "$HEADERS"' EXIT
@@ -30,7 +33,7 @@ header() {
 }
 
 # Wait for the server: container start locally, cold start on Scaleway.
-curl -fsS --retry 12 --retry-delay 5 --retry-all-errors -o /dev/null "$BASE/healthz" \
+curl -fsS --retry "$RETRIES" --retry-delay 5 --retry-all-errors -o /dev/null "$BASE/healthz" \
   || fail "/healthz not reachable at $BASE"
 ok "/healthz reachable"
 
@@ -42,8 +45,10 @@ req /
 [ "$STATUS" = "200" ] || fail "/ returned $STATUS"
 [[ "$(header cache-control)" == *no-cache* ]] || fail "/ cache-control is '$(header cache-control)', expected no-cache"
 [[ "$(header x-content-type-options)" == *nosniff* ]] || fail "/ is missing X-Content-Type-Options: nosniff"
+[[ "$(header strict-transport-security)" == *max-age=* ]] || fail "/ is missing Strict-Transport-Security"
 [[ "$(header server)" != *[0-9]* ]] || fail "Server header leaks a version: '$(header server)'"
 ok "/ 200 with no-cache and security headers"
+ok "/ sends Strict-Transport-Security"
 
 req /config/
 [ "$STATUS" = "200" ] || fail "/config/ returned $STATUS"
