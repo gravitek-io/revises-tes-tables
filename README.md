@@ -81,6 +81,23 @@ Les données sont stockées localement dans le navigateur :
 - `npm run start` - Démarrer l'application en production
 - `npm run lint` - Vérifier la qualité du code
 
+## 🚀 Déploiement
+
+L'application est hébergée sur un **Scaleway Serverless Container** (région Paris)
+qui se met en veille quand personne ne l'utilise (coût proche de zéro à vide).
+L'image Docker sert l'export statique Next.js avec nginx.
+
+- L'infrastructure est décrite en Terraform dans [`infra/`](infra/).
+- Chaque fusion sur `main` déclenche [`deploy.yml`](.github/workflows/deploy.yml) :
+  construction de l'image, publication dans le Container Registry Scaleway, puis
+  `terraform apply`.
+- Chaque pull request est vérifiée par [`ci.yml`](.github/workflows/ci.yml) :
+  lint, build, scan de l'image, tests de fumée et `terraform plan`.
+- Les secrets sont gérés dans Infisical ; GitHub ne stocke que l'identifiant de
+  la machine identity Infisical.
+
+Le guide complet (bootstrap, DNS, rollback) est dans [`infra/README.md`](infra/README.md).
+
 ## 📄 Licence
 
 Ce projet est distribué sous la licence Apache 2.0. Voir le fichier [LICENSE](LICENSE) pour plus de détails.

@@ -1,0 +1,157 @@
+# Production deploy. Runs on every push to main and on manual dispatch.
+#
+# Order matters:
+#   1. lint (fail fast, the build itself happens inside the Dockerfile)
+#   2. fetch SCW_ACCESS_KEY / SCW_SECRET_KEY from Infisical
+#   3. terraform apply targeted to the registry namespace, so it exists before
+#      the first image push (idempotent afterwards)
+#   4. build and push web:<sha> and web:latest
+#   5. full terraform apply with image_tag=<sha> (creates or redeploys the container)
+#   6. smoke test on the native URL, then on the custom domain when bound
+#
+# Manual dispatch:
+#   - image_tag: redeploy an existing tag (rollback). Build and push are skipped.
+#   - bootstrap: first deploy only. Skips the custom domain binding because the
+#     CNAME at Infomaniak cannot exist before the container endpoint is known.
+#     See infra/README.md. The first push-triggered run (merge to main) fails at
+#     the domain binding because the CNAME does not exist yet: cancel or ignore
+#     it. Dispatching bootstrap=true once the domain is already bound destroys
+#     the binding until the next normal run.
+#
+# Secrets: Infisical (eu.infisical.com, env prod, path /REVISES-TES-TABLES) is
+# the source of truth. GitHub holds only INFISICAL_CLIENT_ID /
+# INFISICAL_CLIENT_SECRET. The Infisical -> GitHub integration must NOT be
+# enabled on this repository: it would prune those two secrets.
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: "Existing image tag (git SHA) to redeploy for a rollback. Leave empty to build the current commit."
+        required: false
+        type: string
+      bootstrap:
+        description: "First deploy: skip the custom domain binding (the CNAME cannot exist before the container does). WARNING: on an already bound domain this destroys the binding until the next normal run."
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+env:
+  REGISTRY: rg.fr-par.scw.cloud
+  IMAGE: rg.fr-par.scw.cloud/revises-tes-tables/web
+  TF_VAR_image_tag: ${{ inputs.image_tag || github.sha }}
+  TF_VAR_enable_custom_domain: ${{ inputs.bootstrap && 'false' || 'true' }}
+  TF_IN_AUTOMATION: "true"
+  TF_INPUT: "0"
+
+jobs:
+  deploy:
+    name: Build, push and apply
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: production
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Node.js
+        if: ${{ !inputs.image_tag }}
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Lint
+        if: ${{ !inputs.image_tag }}
+        run: |
+          npm ci --no-audit --no-fund
+          npm run lint
+
+      - name: Fetch secrets from Infisical
+        uses: ./.github/actions/infisical-secrets
+        with:
+          client-id: ${{ secrets.INFISICAL_CLIENT_ID }}
+          client-secret: ${{ secrets.INFISICAL_CLIENT_SECRET }}
+          required-keys: "SCW_ACCESS_KEY SCW_SECRET_KEY"
+
+      - name: Configure Terraform backend credentials
+        run: |
+          {
+            echo "AWS_ACCESS_KEY_ID=${SCW_ACCESS_KEY}"
+            echo "AWS_SECRET_ACCESS_KEY=${SCW_SECRET_KEY}"
+          } >> "$GITHUB_ENV"
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # v4.0.1
+        with:
+          terraform_version: "1.16.5"
+          terraform_wrapper: false
+
+      - name: Terraform init
+        working-directory: infra
+        run: terraform init
+
+      - name: Ensure the registry namespace exists
+        working-directory: infra
+        run: terraform apply -auto-approve -target=scaleway_registry_namespace.main
+
+      - name: Set up Docker Buildx
+        if: ${{ !inputs.image_tag }}
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+
+      - name: Log in to Scaleway Container Registry
+        if: ${{ !inputs.image_tag }}
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: nologin
+          password: ${{ env.SCW_SECRET_KEY }}
+
+      - name: Build and push image
+        if: ${{ !inputs.image_tag }}
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          platforms: linux/amd64
+          push: true
+          # Plain image manifest only: Scaleway Registry does not need attestations.
+          provenance: false
+          tags: |
+            ${{ env.IMAGE }}:${{ env.TF_VAR_image_tag }}
+            ${{ env.IMAGE }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Terraform apply
+        working-directory: infra
+        run: terraform apply -auto-approve
+
+      - name: Smoke test
+        working-directory: infra
+        # Explicit bash, consistent with the smoke test step in ci.yml.
+        shell: bash
+        run: |
+          native_url="$(terraform output -raw container_url)"
+          public_url="$(terraform output -raw public_url)"
+          ../scripts/smoke-test.sh "$native_url"
+          if [ "$public_url" != "$native_url" ]; then
+            # Certificate issuance after the first binding can take minutes.
+            SMOKE_RETRIES=36 ../scripts/smoke-test.sh "$public_url"
+          fi
+          {
+            echo "## Deployed"
+            echo "- image: \`${IMAGE}:${TF_VAR_image_tag}\`"
+            echo "- native URL: ${native_url}"
+            echo "- public URL: ${public_url}"
+            echo "- CNAME target (Infomaniak): $(terraform output -raw container_endpoint)"
+          } >> "$GITHUB_STEP_SUMMARY"

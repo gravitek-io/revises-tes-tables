@@ -1,0 +1,14 @@
+node_modules
+.next
+out
+.git
+.github
+.claude
+.specify
+docs
+infra
+scripts
+*.md
+.env
+.env.*
+.DS_Store

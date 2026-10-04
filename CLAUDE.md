@@ -81,6 +81,22 @@ All data stored in browser localStorage with 50-session limit:
 - Session history with detailed question tracking  
 - Computed statistics (performance trends, table-specific analytics)
 
+## Deployment
+
+Production runs on a Scaleway Serverless Container (`fr-par`, scale to zero) that
+serves the static export with nginx (`Dockerfile`, `docker/nginx.conf`).
+
+- `infra/`: Terraform root module (registry namespace, container namespace, container,
+  custom domain). Applied only by CI. State in Scaleway Object Storage.
+- `.github/workflows/ci.yml`: PR gate (lint, build, Trivy, smoke test, terraform plan).
+- `.github/workflows/deploy.yml`: push to `main` builds `web:<sha>` and applies Terraform.
+- `.github/actions/infisical-secrets`: fetches `SCW_ACCESS_KEY` / `SCW_SECRET_KEY` from
+  Infisical (EU, env `prod`, path `/REVISES-TES-TABLES`). GitHub holds only the Infisical
+  machine identity credential. Never enable the Infisical → GitHub secret sync.
+- `scripts/smoke-test.sh <url>`: behavioural checks reused by CI, deploy and humans.
+
+Runbook (bootstrap, DNS cutover, rollback): `infra/README.md`.
+
 ## Development Notes
 
 - Application is entirely in French as per specifications
