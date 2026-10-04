@@ -1,0 +1,142 @@
+# Pull request gate. Never pushes an image or touches Scaleway: those are
+# merge-only side effects handled by deploy.yml.
+#
+# The Terraform plan needs the Scaleway CI key from Infisical. Dependabot and
+# fork PRs cannot read repository secrets, so the plan is skipped for them and
+# the summary says so; lint, build, image scan, fmt and validate still run.
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  LOCAL_IMAGE_TAG: revises-tes-tables:ci-${{ github.sha }}
+
+jobs:
+  app:
+    name: Lint and build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Build static export
+        run: npm run build
+
+  image:
+    name: Docker build, scan and smoke test
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+
+      - name: Build image (local only)
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          load: true
+          push: false
+          tags: ${{ env.LOCAL_IMAGE_TAG }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # Merge gate: a fixed HIGH/CRITICAL CVE in the image blocks the PR.
+      - name: Scan image with Trivy
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: ${{ env.LOCAL_IMAGE_TAG }}
+          format: table
+          exit-code: "1"
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+
+      - name: Smoke test the image
+        run: |
+          docker run -d --rm --name smoke -p 8080:8080 "$LOCAL_IMAGE_TAG"
+          scripts/smoke-test.sh http://localhost:8080
+          docker stop smoke
+
+  terraform:
+    name: Terraform validate and plan
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: infra
+    env:
+      # Exposed at job level so steps can test its presence in `if:`
+      # (the `secrets` context is not available in step-level `if:`).
+      INFISICAL_CLIENT_ID: ${{ secrets.INFISICAL_CLIENT_ID }}
+      TF_VAR_image_tag: ${{ github.sha }}
+      TF_IN_AUTOMATION: "true"
+      TF_INPUT: "0"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # v4.0.1
+        with:
+          terraform_version: "1.16.5"
+          terraform_wrapper: false
+
+      - name: Format check
+        run: terraform fmt -check -recursive -diff
+
+      - name: Validate (no backend, no credentials)
+        run: |
+          terraform init -backend=false
+          terraform validate
+
+      - name: Fetch secrets from Infisical
+        if: env.INFISICAL_CLIENT_ID != ''
+        uses: ./.github/actions/infisical-secrets
+        with:
+          client-id: ${{ secrets.INFISICAL_CLIENT_ID }}
+          client-secret: ${{ secrets.INFISICAL_CLIENT_SECRET }}
+          required-keys: "SCW_ACCESS_KEY SCW_SECRET_KEY"
+
+      - name: Plan
+        if: env.INFISICAL_CLIENT_ID != ''
+        env:
+          AWS_ACCESS_KEY_ID: ${{ env.SCW_ACCESS_KEY }}
+          AWS_SECRET_ACCESS_KEY: ${{ env.SCW_SECRET_KEY }}
+        run: |
+          terraform init -reconfigure
+          terraform plan -lock=false -no-color | tee plan.txt
+          {
+            echo "## Terraform plan"
+            echo '```'
+            cat plan.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Plan skipped
+        if: env.INFISICAL_CLIENT_ID == ''
+        run: |
+          echo "Terraform plan skipped: no Infisical credential in this context (Dependabot or fork PR)." >> "$GITHUB_STEP_SUMMARY"
