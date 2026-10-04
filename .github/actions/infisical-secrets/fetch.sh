@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Fetch an Infisical folder into GITHUB_ENV with log masking.
+# Fetch selected secrets from an Infisical folder into GITHUB_ENV with log masking.
 #
 # Inputs (environment):
 #   INFISICAL_UNIVERSAL_AUTH_CLIENT_ID, INFISICAL_UNIVERSAL_AUTH_CLIENT_SECRET
@@ -10,18 +10,22 @@
 #                         authenticating with a machine identity; not a secret)
 #   INFISICAL_ENV         e.g. prod
 #   INFISICAL_PATH        e.g. /REVISES-TES-TABLES
-#   REQUIRED_KEYS         space-separated keys that must be present
+#   REQUIRED_KEYS         space-separated allowlist: the keys to export. Every
+#                         one of them must exist in the folder, and nothing else
+#                         is exported, so a stray or malicious key in the folder
+#                         (PATH, NODE_OPTIONS, *_PROXY, ...) can never reach the
+#                         job environment.
 #   GITHUB_ENV            file the variables are appended to
 #
-# The folder is expected to hold secrets only, so EVERY value is masked in the
-# logs, whatever its length, line by line for multi-line values. Masking is
-# registered before anything is written to GITHUB_ENV.
+# The folder is expected to hold secrets only, so EVERY value it returns is
+# masked in the logs, whatever its length and whether or not it is exported,
+# line by line for multi-line values. Masks are registered before anything is
+# written to GITHUB_ENV.
 #
 # The export is parsed as JSON (not line-by-line dotenv) so that a multi-line
 # value cannot be split into bogus variables, and each variable is written with
 # the GITHUB_ENV heredoc syntax and a random delimiter so that a value can
-# never inject extra variables. Variable names are validated and names that
-# could hijack later steps (PATH, NODE_OPTIONS, GITHUB_*, ...) are rejected.
+# never inject extra variables.
 #
 # Fails loudly on any error, including an empty export: a broken credential
 # must never produce a green step with no variables (the first symptom would be
@@ -36,6 +40,16 @@ set -euo pipefail
 : "${INFISICAL_PATH:?INFISICAL_PATH is required}"
 : "${REQUIRED_KEYS:?REQUIRED_KEYS is required}"
 : "${GITHUB_ENV:?GITHUB_ENV must point to a writable file}"
+
+# The allowlist comes from the workflow author, but validate it anyway: only
+# plain environment variable names are accepted.
+read -r -a required_keys <<< "${REQUIRED_KEYS}"
+for required in "${required_keys[@]}"; do
+  if ! [[ "${required}" =~ ^[A-Za-z_][A-Za-z0-9_]*$ ]]; then
+    echo "::error title=Invalid required key::'${required}' is not a valid environment variable name."
+    exit 1
+  fi
+done
 
 echo "Authenticating to Infisical (${INFISICAL_DOMAIN}) with Universal Auth..."
 if ! INFISICAL_TOKEN="$(infisical login --method=universal-auth --domain="${INFISICAL_DOMAIN}" --silent --plain)"; then
@@ -70,23 +84,14 @@ if ! jq -r '.[] | ((.key // "") | @base64) + " " + ((.value // "") | @base64)' "
   exit 1
 fi
 
-# Pass 1: validate names, collect the pairs and register every mask. Nothing is
-# written to GITHUB_ENV until all masks are in place.
+# Pass 1: register a mask for every value the folder returned and collect the
+# allowlisted pairs. Nothing is written to GITHUB_ENV until all masks are in place.
 keys=()
 values=()
+skipped=0
 while read -r key_b64 value_b64; do
   key="$(printf '%s' "${key_b64}" | base64 -d)"
   value="$(printf '%s' "${value_b64}" | base64 -d)"
-  if ! [[ "${key}" =~ ^[A-Za-z_][A-Za-z0-9_]*$ ]]; then
-    echo "::error title=Invalid secret name::Secret name is not a valid environment variable name."
-    exit 1
-  fi
-  case "${key}" in
-    PATH | BASH_ENV | ENV | BASHOPTS | SHELLOPTS | PS4 | NODE_OPTIONS | NODE_PATH | HOME | LD_* | *_PROXY | GITHUB_* | RUNNER_* | ACTIONS_* | INPUT_*)
-      echo "::error title=Invalid secret name::${key} is reserved and cannot be exported to the job environment."
-      exit 1
-      ;;
-  esac
   # Mask line by line: the runner masks per line, so a multi-line secret must
   # register each of its lines.
   while IFS= read -r masked_line || [ -n "${masked_line}" ]; do
@@ -97,12 +102,23 @@ while read -r key_b64 value_b64; do
     m="${m//$'\r'/%0D}"
     echo "::add-mask::${m}"
   done <<< "${value}"
-  keys+=("${key}")
-  values+=("${value}")
+  wanted=0
+  for required in "${required_keys[@]}"; do
+    if [ "${key}" = "${required}" ]; then
+      wanted=1
+      break
+    fi
+  done
+  if [ "${wanted}" -eq 1 ]; then
+    keys+=("${key}")
+    values+=("${value}")
+  else
+    skipped=$((skipped + 1))
+  fi
 done < "${pairs_file}"
 
-# Pass 2: write each variable with a random heredoc delimiter, so no value can
-# terminate its own block and inject further variables.
+# Pass 2: write each allowlisted variable with a random heredoc delimiter, so no
+# value can terminate its own block and inject further variables.
 for i in "${!keys[@]}"; do
   delim="EOF_$(openssl rand -hex 16)"
   if [[ "${values[$i]}" == *"${delim}"* ]]; then
@@ -111,12 +127,12 @@ for i in "${!keys[@]}"; do
   fi
   { echo "${keys[$i]}<<${delim}"; printf '%s\n' "${values[$i]}"; echo "${delim}"; } >> "${GITHUB_ENV}"
 done
-echo "Exported ${#keys[@]} secret(s) from ${INFISICAL_PATH} (${INFISICAL_ENV})."
+echo "Exported ${#keys[@]} secret(s) from ${INFISICAL_PATH} (${INFISICAL_ENV}); ${skipped} key(s) not in the allowlist were ignored."
 
 missing=()
-for required in ${REQUIRED_KEYS}; do
+for required in "${required_keys[@]}"; do
   found=0
-  for key in "${keys[@]}"; do
+  for key in "${keys[@]+"${keys[@]}"}"; do
     if [ "${key}" = "${required}" ]; then
       found=1
       break

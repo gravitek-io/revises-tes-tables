@@ -13,7 +13,9 @@ inputs:
     description: Machine identity client secret (Universal Auth).
     required: true
   required-keys:
-    description: Space-separated list of keys that must be present in the folder.
+    description: >-
+      Space-separated allowlist of the keys to export. Every key must exist in the
+      folder and nothing else is exported to the job environment.
     required: true
   project-id:
     description: Infisical project ID holding the folder.

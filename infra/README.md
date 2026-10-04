@@ -201,6 +201,10 @@ S3 lockfile protects the state, but the pipeline owns the image tag.
   Dependabot. Bump them by hand from
   <https://github.com/Infisical/cli/releases>: download `checksums.txt` and copy
   the hash of `cli_<version>_linux_amd64.tar.gz`.
-- **Log masking**: every value in the Infisical folder is masked in logs
-  regardless of its length, so the folder must stay secrets-only (no short or
-  non-sensitive values such as regions or booleans).
+- **Allowlist and log masking**: the composite action exports only the keys the
+  workflow names in `required-keys` (`SCW_ACCESS_KEY` and `SCW_SECRET_KEY`); any
+  other key found in the folder is ignored, so a stray or malicious entry can
+  never reach the job environment. Every value the folder returns is masked in
+  logs regardless of its length, so the folder must stay secrets-only (no short
+  or public values such as `true` or `fr-par`, which would otherwise redact
+  ordinary log output).

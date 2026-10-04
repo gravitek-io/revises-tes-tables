@@ -295,7 +295,7 @@ both until a deliberate migration. Without this, every CI job would fail at `npm
 ## 9. Amendments during implementation (2026-10-04)
 
 - Terraform variables `enable_custom_domain`, `min_scale`, `max_scale` and output `container_url` were added; the image is named `web`.
-- Secrets export uses `--format=json` parsed with jq; every value is masked (no 8-character threshold); variables are written with random heredoc delimiters; key names are validated against a denylist of reserved names.
+- Secrets export uses `--format=json` parsed with jq; every value is masked (no 8-character threshold); variables are written with random heredoc delimiters; only the keys listed in `required-keys` are exported (allowlist), everything else in the folder is ignored.
 - The `infisical-secrets` action has a `project-id` input defaulting to the shared "Gravitek.io" project `358e7cc0-a204-47d6-9be7-32579c92dc60`.
 - First deploy is a two-run sequence (`bootstrap=true` dispatch, then the CNAME, then a normal run) because the CNAME cannot exist before the container endpoint is known. The push-triggered run on merge fails at the domain binding and is cancelled or ignored.
 - Piped workflow steps use `shell: bash` because GitHub's default shell has no pipefail.
