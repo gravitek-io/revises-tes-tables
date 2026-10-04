@@ -1,0 +1,58 @@
+name: Fetch secrets from Infisical
+description: >
+  Installs a pinned, checksum-verified Infisical CLI, authenticates with a
+  machine identity (Universal Auth) and exports one folder into GITHUB_ENV with
+  log masking. Fails if a required key is missing.
+
+inputs:
+  client-id:
+    description: Machine identity client ID (Universal Auth).
+    required: true
+  client-secret:
+    description: Machine identity client secret (Universal Auth).
+    required: true
+  required-keys:
+    description: Space-separated list of keys that must be present in the folder.
+    required: true
+  path:
+    description: Infisical folder to export.
+    required: false
+    default: /REVISES-TES-TABLES
+  environment:
+    description: Infisical environment slug.
+    required: false
+    default: prod
+  domain:
+    description: Infisical instance URL.
+    required: false
+    default: https://eu.infisical.com
+
+runs:
+  using: composite
+  steps:
+    - name: Install Infisical CLI (pinned release, checksum verified)
+      shell: bash
+      env:
+        INFISICAL_CLI_VERSION: "0.43.138"
+        # sha256 of cli_<version>_linux_amd64.tar.gz from the release's checksums.txt
+        INFISICAL_CLI_SHA256: "45a98380964650e4cc2b57ff5361d174afb55b3daf7c2465640d3a7bb7550f92"
+      run: |
+        set -euo pipefail
+        archive="cli_${INFISICAL_CLI_VERSION}_linux_amd64.tar.gz"
+        curl -fsSL -o "/tmp/${archive}" \
+          "https://github.com/Infisical/cli/releases/download/v${INFISICAL_CLI_VERSION}/${archive}"
+        echo "${INFISICAL_CLI_SHA256}  /tmp/${archive}" | sha256sum -c -
+        tar -xzf "/tmp/${archive}" -C /tmp infisical
+        sudo install -m 0755 /tmp/infisical /usr/local/bin/infisical
+        infisical --version
+
+    - name: Export secrets to the job environment
+      shell: bash
+      env:
+        INFISICAL_UNIVERSAL_AUTH_CLIENT_ID: ${{ inputs.client-id }}
+        INFISICAL_UNIVERSAL_AUTH_CLIENT_SECRET: ${{ inputs.client-secret }}
+        INFISICAL_DOMAIN: ${{ inputs.domain }}
+        INFISICAL_ENV: ${{ inputs.environment }}
+        INFISICAL_PATH: ${{ inputs.path }}
+        REQUIRED_KEYS: ${{ inputs.required-keys }}
+      run: "${{ github.action_path }}/fetch.sh"
