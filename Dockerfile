@@ -16,7 +16,7 @@ COPY . .
 RUN npm run build
 
 # ---- Stage 2: serve with nginx (non-root, port 8080) ----------------------
-FROM nginxinc/nginx-unprivileged:alpine-slim@sha256:b94a56c52fd315bbd8f1f4368d64c25983351c978313e02feff2c0b35e856f2d
+FROM nginxinc/nginx-unprivileged:alpine-slim@sha256:a8cb0f33d51fa107c96fd2bd3a71aaf564ec131e9d2bdf8700944f0ed8b170d7
 
 # Apply Alpine security updates (the pinned digest may lag behind fixed CVEs
 # such as pcre2 10.49). apk needs root; drop back to the image's nginx user.
