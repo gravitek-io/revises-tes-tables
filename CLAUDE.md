@@ -68,11 +68,27 @@ Messages adapt based on performance percentage and identify weakest tables for t
 
 ## Styling Approach
 
-Uses Tailwind CSS with child-friendly design patterns:
+Uses Tailwind CSS v4 with child-friendly design patterns:
 - Gradient backgrounds and colorful UI elements
-- Custom animations (bounce, wiggle, slide-up) defined in globals.css
+- Custom animations (bounce-in, wiggle, slide-up) defined in globals.css
 - Responsive design optimized for both desktop and mobile
 - Toast notifications for user feedback
+
+### Tailwind v4 configuration
+CSS-first: there is no `tailwind.config.ts`. `postcss.config.js` loads
+`@tailwindcss/postcss` (it handles vendor prefixes, no autoprefixer), and
+`src/app/globals.css` holds `@import 'tailwindcss'` plus an `@theme` block with the
+design tokens. Choices that keep the v3 look (migration of 2026-11, verified by
+pixel comparison):
+- The default hues the app uses (gray, red, orange, yellow, green, blue, purple,
+  pink) are pinned to their v3 sRGB hex values in `@theme`; v4's OKLCH palette is
+  visibly more saturated. Add a hue's v3 values there before using a new hue.
+- Gradients use `bg-linear-to-r/srgb`: v4 interpolates in OKLab by default.
+- `space-x-*`/`space-y-*` now put the margin on every child but the last, so an
+  inline child (e.g. a `<Link>`) needs `block` for vertical spacing to apply.
+- Buttons keep `cursor: pointer` through a base-layer rule (v4 default is `default`).
+- `hover:` variants only apply on devices that support hover (no sticky hover on
+  touch screens).
 
 ## Data Persistence
 

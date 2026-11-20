@@ -101,7 +101,7 @@ export default function ConfigPage() {
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center space-x-4">
             <Link href="/">
-              <button className="p-2 bg-white/10 hover:bg-white/20 backdrop-blur-sm rounded-xl text-white transition-all duration-300 transform hover:scale-105">
+              <button className="p-2 bg-white/10 hover:bg-white/20 backdrop-blur-xs rounded-xl text-white transition-all duration-300 transform hover:scale-105">
                 <ArrowLeft className="h-6 w-6" />
               </button>
             </Link>
@@ -124,7 +124,7 @@ export default function ConfigPage() {
 
         <div className="space-y-8">
           {/* Number of Questions */}
-          <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 slide-up">
+          <div className="bg-white/10 backdrop-blur-xs rounded-2xl p-6 slide-up">
             <h2 className="text-xl font-semibold text-white mb-4">
               Nombre de questions par session
             </h2>
@@ -146,7 +146,7 @@ export default function ConfigPage() {
           </div>
 
           {/* Tables Selection */}
-          <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 bounce-in">
+          <div className="bg-white/10 backdrop-blur-xs rounded-2xl p-6 bounce-in">
             <h2 className="text-xl font-semibold text-white mb-4">
               Tables à réviser
               <span className="text-white/70 text-sm ml-2">
@@ -161,7 +161,7 @@ export default function ConfigPage() {
                   onClick={() => handleTableToggle(table)}
                   className={`py-4 px-3 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 ${
                     settings.selectedTables.includes(table)
-                      ? "bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg wiggle"
+                      ? "bg-linear-to-r/srgb from-purple-500 to-pink-500 text-white shadow-lg wiggle"
                       : "bg-white/10 hover:bg-white/20 text-white/80"
                   }`}
                 >
@@ -172,7 +172,7 @@ export default function ConfigPage() {
           </div>
 
           {/* Preview */}
-          <div className="bg-gradient-to-r from-green-400/20 to-blue-500/20 backdrop-blur-sm rounded-2xl p-6 slide-up">
+          <div className="bg-linear-to-r/srgb from-green-400/20 to-blue-500/20 backdrop-blur-xs rounded-2xl p-6 slide-up">
             <h2 className="text-xl font-semibold text-white mb-4">
               Aperçu de ta session
             </h2>
@@ -185,7 +185,7 @@ export default function ConfigPage() {
                 <span className="font-semibold">Tables sélectionnées :</span>{" "}
                 {settings.selectedTables.join(" × ")}
               </p>
-              <p className="text-sm text-white/60 mt-3">
+              <p className="text-sm text-white/60">
                 Les questions seront mélangées aléatoirement entre toutes les
                 tables sélectionnées.
               </p>
@@ -214,7 +214,7 @@ export default function ConfigPage() {
           {/* Back to Home */}
           <div className="text-center">
             <Link href="/">
-              <button className="bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white font-semibold py-3 px-8 rounded-xl transition-all duration-300 transform hover:scale-105">
+              <button className="bg-white/10 hover:bg-white/20 backdrop-blur-xs text-white font-semibold py-3 px-8 rounded-xl transition-all duration-300 transform hover:scale-105">
                 Retour à l&apos;accueil
               </button>
             </Link>
