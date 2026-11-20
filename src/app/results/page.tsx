@@ -69,7 +69,7 @@ function ResultsContent() {
           <h1 className="text-4xl md:text-5xl font-bold text-white mb-4 slide-up">
             Session terminée !
           </h1>
-          <div className="bg-gradient-to-r from-purple-400/20 to-pink-400/20 backdrop-blur-sm rounded-2xl p-6 slide-up">
+          <div className="bg-linear-to-r/srgb from-purple-400/20 to-pink-400/20 backdrop-blur-xs rounded-2xl p-6 slide-up">
             <p className="text-xl text-white text-balance">
               {encouragement.message}
             </p>
@@ -78,22 +78,22 @@ function ResultsContent() {
 
         {/* Main Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          <div className="bg-green-500/20 backdrop-blur-sm rounded-xl p-6 text-center bounce-in">
+          <div className="bg-green-500/20 backdrop-blur-xs rounded-xl p-6 text-center bounce-in">
             <div className="text-3xl font-bold text-green-300 mb-2">{correct}</div>
             <div className="text-white/80 text-sm">Bonnes réponses</div>
           </div>
           
-          <div className="bg-red-500/20 backdrop-blur-sm rounded-xl p-6 text-center bounce-in">
+          <div className="bg-red-500/20 backdrop-blur-xs rounded-xl p-6 text-center bounce-in">
             <div className="text-3xl font-bold text-red-300 mb-2">{incorrect}</div>
             <div className="text-white/80 text-sm">Erreurs</div>
           </div>
           
-          <div className="bg-blue-500/20 backdrop-blur-sm rounded-xl p-6 text-center bounce-in">
+          <div className="bg-blue-500/20 backdrop-blur-xs rounded-xl p-6 text-center bounce-in">
             <div className="text-3xl font-bold text-blue-300 mb-2">{percentage}%</div>
             <div className="text-white/80 text-sm">Score</div>
           </div>
           
-          <div className="bg-yellow-500/20 backdrop-blur-sm rounded-xl p-6 text-center bounce-in">
+          <div className="bg-yellow-500/20 backdrop-blur-xs rounded-xl p-6 text-center bounce-in">
             <div className="text-3xl font-bold text-yellow-300 mb-2">{Math.round(averageTime)}s</div>
             <div className="text-white/80 text-sm">Temps moyen</div>
           </div>
@@ -102,10 +102,10 @@ function ResultsContent() {
         {/* Performance Badge */}
         <div className="mb-8 flex justify-center">
           <div className={`px-8 py-4 rounded-2xl font-bold text-xl ${
-            percentage >= 90 ? 'bg-gradient-to-r from-yellow-400 to-orange-500 text-white' :
-            percentage >= 70 ? 'bg-gradient-to-r from-green-400 to-blue-500 text-white' :
-            percentage >= 50 ? 'bg-gradient-to-r from-blue-400 to-purple-500 text-white' :
-            'bg-gradient-to-r from-purple-400 to-pink-500 text-white'
+            percentage >= 90 ? 'bg-linear-to-r/srgb from-yellow-400 to-orange-500 text-white' :
+            percentage >= 70 ? 'bg-linear-to-r/srgb from-green-400 to-blue-500 text-white' :
+            percentage >= 50 ? 'bg-linear-to-r/srgb from-blue-400 to-purple-500 text-white' :
+            'bg-linear-to-r/srgb from-purple-400 to-pink-500 text-white'
           } wiggle`}>
             {percentage >= 90 ? '🏆 Champion' :
              percentage >= 70 ? '⭐ Très bien' :
@@ -115,7 +115,7 @@ function ResultsContent() {
         </div>
 
         {/* Detailed Analysis */}
-        <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 mb-8 slide-up">
+        <div className="bg-white/10 backdrop-blur-xs rounded-2xl p-6 mb-8 slide-up">
           <h2 className="text-2xl font-bold text-white mb-6 flex items-center">
             <TrendingUp className="h-6 w-6 mr-2" />
             Analyse détaillée par table
@@ -159,7 +159,7 @@ function ResultsContent() {
 
         {/* Quick Review */}
         {incorrect > 0 && (
-          <div className="bg-red-500/10 backdrop-blur-sm rounded-2xl p-6 mb-8 slide-up">
+          <div className="bg-red-500/10 backdrop-blur-xs rounded-2xl p-6 mb-8 slide-up">
             <h3 className="text-xl font-bold text-white mb-4">Révision rapide des erreurs</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {session.questions
@@ -183,14 +183,14 @@ function ResultsContent() {
         {/* Actions */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
           <Link href="/game">
-            <button className="w-full bg-gradient-to-r from-green-400 to-blue-500 hover:from-green-500 hover:to-blue-600 text-white font-bold py-4 px-6 rounded-xl transition-all duration-300 transform hover:scale-105 flex items-center justify-center space-x-2">
+            <button className="w-full bg-linear-to-r/srgb from-green-400 to-blue-500 hover:from-green-500 hover:to-blue-600 text-white font-bold py-4 px-6 rounded-xl transition-all duration-300 transform hover:scale-105 flex items-center justify-center space-x-2">
               <RotateCcw className="h-6 w-6" />
               <span>Rejouer</span>
             </button>
           </Link>
 
           <Link href="/">
-            <button className="w-full bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white font-semibold py-4 px-6 rounded-xl transition-all duration-300 transform hover:scale-105 flex items-center justify-center space-x-2">
+            <button className="w-full bg-white/10 hover:bg-white/20 backdrop-blur-xs text-white font-semibold py-4 px-6 rounded-xl transition-all duration-300 transform hover:scale-105 flex items-center justify-center space-x-2">
               <Home className="h-6 w-6" />
               <span>Accueil</span>
             </button>

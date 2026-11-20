@@ -145,19 +145,19 @@ export default function GamePage() {
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <Link href="/">
-            <button className="p-2 bg-white/10 hover:bg-white/20 backdrop-blur-sm rounded-xl text-white transition-all duration-300 transform hover:scale-105">
+            <button className="p-2 bg-white/10 hover:bg-white/20 backdrop-blur-xs rounded-xl text-white transition-all duration-300 transform hover:scale-105">
               <ArrowLeft className="h-6 w-6" />
             </button>
           </Link>
 
           <div className="flex items-center space-x-4 text-white">
             {streak > 0 && (
-              <div className="bg-gradient-to-r from-orange-400 to-red-500 px-3 py-1 rounded-full text-sm font-semibold flex items-center space-x-1">
+              <div className="bg-linear-to-r/srgb from-orange-400 to-red-500 px-3 py-1 rounded-full text-sm font-semibold flex items-center space-x-1">
                 <Zap className="h-4 w-4" />
                 <span>{streak}</span>
               </div>
             )}
-            <div className="bg-white/10 backdrop-blur-sm px-4 py-2 rounded-xl font-semibold">
+            <div className="bg-white/10 backdrop-blur-xs px-4 py-2 rounded-xl font-semibold">
               {currentQuestionIndex + 1} / {questions.length}
             </div>
           </div>
@@ -167,19 +167,19 @@ export default function GamePage() {
         <div className="mb-8">
           <div className="bg-white/10 rounded-full h-3 overflow-hidden">
             <div
-              className="bg-gradient-to-r from-green-400 to-blue-500 h-full transition-all duration-300 ease-out"
+              className="bg-linear-to-r/srgb from-green-400 to-blue-500 h-full transition-all duration-300 ease-out"
               style={{ width: `${progress}%` }}
             />
           </div>
         </div>
 
         {/* Question Card */}
-        <div className="bg-white/10 backdrop-blur-sm rounded-3xl p-8 mb-8 text-center relative overflow-hidden">
+        <div className="bg-white/10 backdrop-blur-xs rounded-3xl p-8 mb-8 text-center relative overflow-hidden">
           {showFeedback && (
             <div
               className={`absolute inset-0 flex items-end justify-center ${
                 isCorrect ? "bg-green-500/90" : "bg-red-500/90"
-              } backdrop-blur-sm transition-all duration-300`}
+              } backdrop-blur-xs transition-all duration-300`}
             >
               <div className="text-center">
                 {isCorrect ? (
@@ -207,7 +207,7 @@ export default function GamePage() {
               type="number"
               value={userAnswer}
               onChange={(e) => setUserAnswer(e.target.value)}
-              className="w-32 h-16 text-3xl text-center bg-white/20 backdrop-blur-sm border-2 border-white/30 focus:border-white/60 rounded-xl text-white placeholder-white/50 outline-none transition-all duration-300"
+              className="w-32 h-16 text-3xl text-center bg-white/20 backdrop-blur-xs border-2 border-white/30 focus:border-white/60 rounded-xl text-white placeholder-white/50 outline-hidden transition-all duration-300"
               placeholder="?"
               disabled={showFeedback}
               autoFocus
@@ -216,7 +216,7 @@ export default function GamePage() {
             <button
               type="submit"
               disabled={!userAnswer.trim() || showFeedback}
-              className="ml-4 bg-gradient-to-r from-green-400 to-blue-500 hover:from-green-500 hover:to-blue-600 disabled:from-gray-400 disabled:to-gray-500 text-white font-bold py-4 px-8 rounded-xl transition-all duration-300 transform hover:scale-105 disabled:scale-100 disabled:cursor-not-allowed"
+              className="ml-4 bg-linear-to-r/srgb from-green-400 to-blue-500 hover:from-green-500 hover:to-blue-600 disabled:from-gray-400 disabled:to-gray-500 text-white font-bold py-4 px-8 rounded-xl transition-all duration-300 transform hover:scale-105 disabled:scale-100 disabled:cursor-not-allowed"
             >
               Valider
             </button>
@@ -229,7 +229,7 @@ export default function GamePage() {
 
         {/* Quick Stats */}
         <div className="grid grid-cols-3 gap-4 text-center">
-          <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4">
+          <div className="bg-white/10 backdrop-blur-xs rounded-xl p-4">
             <div className="text-green-300 text-2xl font-bold">
               {
                 questions
@@ -240,7 +240,7 @@ export default function GamePage() {
             <div className="text-white/70 text-sm">Bonnes</div>
           </div>
 
-          <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4">
+          <div className="bg-white/10 backdrop-blur-xs rounded-xl p-4">
             <div className="text-red-300 text-2xl font-bold">
               {
                 questions
@@ -251,7 +251,7 @@ export default function GamePage() {
             <div className="text-white/70 text-sm">Mauvaises</div>
           </div>
 
-          <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4">
+          <div className="bg-white/10 backdrop-blur-xs rounded-xl p-4">
             <div className="text-blue-300 text-2xl font-bold">
               {currentQuestionIndex > 0
                 ? Math.round(

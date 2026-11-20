@@ -44,7 +44,7 @@ export default function HomePage() {
 
         {/* Quick Stats */}
         {stats && stats.totalSessions > 0 && (
-          <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 mb-8 bounce-in">
+          <div className="bg-white/10 backdrop-blur-xs rounded-2xl p-6 mb-8 bounce-in">
             <h2 className="text-white font-semibold mb-4 flex items-center">
               <BarChart3 className="h-5 w-5 mr-2" />
               Tes derniers progrès
@@ -80,9 +80,9 @@ export default function HomePage() {
 
         {/* Main Actions */}
         <div className="space-y-4">
-          {/* Start Game Button */}
-          <Link href="/game">
-            <button className="w-full bg-gradient-to-r from-green-400 to-blue-500 hover:from-green-500 hover:to-blue-600 text-white font-bold py-6 px-8 rounded-2xl text-xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl flex items-center justify-center space-x-3 bounce-in">
+          {/* Start Game Button (block: space-y spacing needs a block-level child) */}
+          <Link href="/game" className="block">
+            <button className="w-full bg-linear-to-r/srgb from-green-400 to-blue-500 hover:from-green-500 hover:to-blue-600 text-white font-bold py-6 px-8 rounded-2xl text-xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl flex items-center justify-center space-x-3 bounce-in">
               <Play className="h-8 w-8" />
               <span>Commencer à jouer</span>
             </button>
@@ -90,7 +90,7 @@ export default function HomePage() {
 
           {/* Settings Display */}
           {settings && (
-            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 text-white/80 text-center slide-up">
+            <div className="bg-white/10 backdrop-blur-xs rounded-xl p-4 text-white/80 text-center slide-up">
               <p className="text-sm">
                 {settings.numberOfQuestions} questions • Tables:{" "}
                 {settings.selectedTables.join(", ")}
@@ -101,14 +101,14 @@ export default function HomePage() {
           {/* Secondary Actions */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Link href="/config">
-              <button className="w-full bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white font-semibold py-4 px-6 rounded-xl transition-all duration-300 transform hover:scale-105 flex items-center justify-center space-x-2 slide-up">
+              <button className="w-full bg-white/10 hover:bg-white/20 backdrop-blur-xs text-white font-semibold py-4 px-6 rounded-xl transition-all duration-300 transform hover:scale-105 flex items-center justify-center space-x-2 slide-up">
                 <Settings className="h-5 w-5" />
                 <span>Configuration</span>
               </button>
             </Link>
 
             <Link href="/stats">
-              <button className="w-full bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white font-semibold py-4 px-6 rounded-xl transition-all duration-300 transform hover:scale-105 flex items-center justify-center space-x-2 slide-up">
+              <button className="w-full bg-white/10 hover:bg-white/20 backdrop-blur-xs text-white font-semibold py-4 px-6 rounded-xl transition-all duration-300 transform hover:scale-105 flex items-center justify-center space-x-2 slide-up">
                 <BarChart3 className="h-5 w-5" />
                 <span>Statistiques</span>
               </button>
@@ -119,7 +119,7 @@ export default function HomePage() {
         {/* Welcome Message for First Time */}
         {!stats || stats.totalSessions === 0 ? (
           <div className="mt-8 text-center">
-            <div className="bg-gradient-to-r from-purple-400/20 to-pink-400/20 backdrop-blur-sm rounded-xl p-6 slide-up">
+            <div className="bg-linear-to-r/srgb from-purple-400/20 to-pink-400/20 backdrop-blur-xs rounded-xl p-6 slide-up">
               <h2 className="text-white font-semibold mb-2">
                 Première visite ? 🎉
               </h2>
@@ -139,7 +139,7 @@ export default function HomePage() {
       </div>
 
       <footer className="pt-16 text-center">
-        <div className="bg-white/5 backdrop-blur-sm rounded-xl p-6 mb-4">
+        <div className="bg-white/5 backdrop-blur-xs rounded-xl p-6 mb-4">
           <h2 className="text-white font-semibold mb-3 text-lg">
             Application développée par Gravitek
           </h2>

@@ -15,7 +15,7 @@ Une application web interactive pour aider les enfants à réviser leurs tables 
 
 - **Next.js 14** - Framework React avec App Router
 - **TypeScript** - Typage statique pour la sécurité du code
-- **Tailwind CSS** - Framework CSS utilitaire
+- **Tailwind CSS v4** - Framework CSS utilitaire (configuration CSS-first dans `src/app/globals.css`)
 - **Lucide React** - Icônes modernes
 - **React Toastify** - Notifications élégantes
 

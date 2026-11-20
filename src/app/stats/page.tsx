@@ -30,7 +30,7 @@ export default function StatsPage() {
         <div className="max-w-4xl mx-auto">
           <div className="flex items-center justify-between mb-8">
             <Link href="/">
-              <button className="p-2 bg-white/10 hover:bg-white/20 backdrop-blur-sm rounded-xl text-white transition-all duration-300 transform hover:scale-105">
+              <button className="p-2 bg-white/10 hover:bg-white/20 backdrop-blur-xs rounded-xl text-white transition-all duration-300 transform hover:scale-105">
                 <ArrowLeft className="h-6 w-6" />
               </button>
             </Link>
@@ -43,7 +43,7 @@ export default function StatsPage() {
             <h2 className="text-2xl font-bold text-white mb-4">Aucune statistique disponible</h2>
             <p className="text-white/80 mb-8">Joue quelques sessions pour voir tes progrès !</p>
             <Link href="/game">
-              <button className="bg-gradient-to-r from-green-400 to-blue-500 hover:from-green-500 hover:to-blue-600 text-white font-bold py-4 px-8 rounded-xl transition-all duration-300 transform hover:scale-105">
+              <button className="bg-linear-to-r/srgb from-green-400 to-blue-500 hover:from-green-500 hover:to-blue-600 text-white font-bold py-4 px-8 rounded-xl transition-all duration-300 transform hover:scale-105">
                 Commencer à jouer
               </button>
             </Link>
@@ -76,7 +76,7 @@ export default function StatsPage() {
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <Link href="/">
-            <button className="p-2 bg-white/10 hover:bg-white/20 backdrop-blur-sm rounded-xl text-white transition-all duration-300 transform hover:scale-105">
+            <button className="p-2 bg-white/10 hover:bg-white/20 backdrop-blur-xs rounded-xl text-white transition-all duration-300 transform hover:scale-105">
               <ArrowLeft className="h-6 w-6" />
             </button>
           </Link>
@@ -89,25 +89,25 @@ export default function StatsPage() {
 
         {/* Global Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          <div className="bg-blue-500/20 backdrop-blur-sm rounded-xl p-6 text-center bounce-in">
+          <div className="bg-blue-500/20 backdrop-blur-xs rounded-xl p-6 text-center bounce-in">
             <Calendar className="h-8 w-8 text-blue-300 mx-auto mb-2" />
             <div className="text-3xl font-bold text-white mb-1">{stats.totalSessions}</div>
             <div className="text-white/80 text-sm">Sessions jouées</div>
           </div>
           
-          <div className="bg-green-500/20 backdrop-blur-sm rounded-xl p-6 text-center bounce-in">
+          <div className="bg-green-500/20 backdrop-blur-xs rounded-xl p-6 text-center bounce-in">
             <Target className="h-8 w-8 text-green-300 mx-auto mb-2" />
             <div className="text-3xl font-bold text-white mb-1">{Math.round(successRate)}%</div>
             <div className="text-white/80 text-sm">Taux de réussite</div>
           </div>
           
-          <div className="bg-yellow-500/20 backdrop-blur-sm rounded-xl p-6 text-center bounce-in">
+          <div className="bg-yellow-500/20 backdrop-blur-xs rounded-xl p-6 text-center bounce-in">
             <Award className="h-8 w-8 text-yellow-300 mx-auto mb-2" />
             <div className="text-3xl font-bold text-white mb-1">{stats.totalCorrectAnswers}</div>
             <div className="text-white/80 text-sm">Bonnes réponses</div>
           </div>
           
-          <div className="bg-purple-500/20 backdrop-blur-sm rounded-xl p-6 text-center bounce-in">
+          <div className="bg-purple-500/20 backdrop-blur-xs rounded-xl p-6 text-center bounce-in">
             <TrendingUp className={`h-8 w-8 mx-auto mb-2 ${
               trend === 'up' ? 'text-green-300' : 
               trend === 'down' ? 'text-red-300' : 
@@ -123,7 +123,7 @@ export default function StatsPage() {
         {/* Performance Analysis */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
           {/* Tables Performance */}
-          <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 slide-up">
+          <div className="bg-white/10 backdrop-blur-xs rounded-2xl p-6 slide-up">
             <h2 className="text-xl font-bold text-white mb-6 flex items-center">
               <Target className="h-6 w-6 mr-2" />
               Performance par table
@@ -152,7 +152,7 @@ export default function StatsPage() {
           </div>
 
           {/* Recent Progress */}
-          <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 slide-up">
+          <div className="bg-white/10 backdrop-blur-xs rounded-2xl p-6 slide-up">
             <h2 className="text-xl font-bold text-white mb-6 flex items-center">
               <Clock className="h-6 w-6 mr-2" />
               Progrès récents
@@ -188,7 +188,7 @@ export default function StatsPage() {
         </div>
 
         {/* Achievements */}
-        <div className="bg-gradient-to-r from-purple-400/20 to-pink-400/20 backdrop-blur-sm rounded-2xl p-6 mb-8 bounce-in">
+        <div className="bg-linear-to-r/srgb from-purple-400/20 to-pink-400/20 backdrop-blur-xs rounded-2xl p-6 mb-8 bounce-in">
           <h2 className="text-xl font-bold text-white mb-6 flex items-center">
             <Award className="h-6 w-6 mr-2" />
             Tes accomplissements
@@ -240,13 +240,13 @@ export default function StatsPage() {
         {/* Actions */}
         <div className="text-center">
           <Link href="/game">
-            <button className="bg-gradient-to-r from-green-400 to-blue-500 hover:from-green-500 hover:to-blue-600 text-white font-bold py-4 px-8 rounded-xl transition-all duration-300 transform hover:scale-105 mr-4">
+            <button className="bg-linear-to-r/srgb from-green-400 to-blue-500 hover:from-green-500 hover:to-blue-600 text-white font-bold py-4 px-8 rounded-xl transition-all duration-300 transform hover:scale-105 mr-4">
               Continuer à jouer
             </button>
           </Link>
           
           <Link href="/config">
-            <button className="bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white font-semibold py-4 px-8 rounded-xl transition-all duration-300 transform hover:scale-105">
+            <button className="bg-white/10 hover:bg-white/20 backdrop-blur-xs text-white font-semibold py-4 px-8 rounded-xl transition-all duration-300 transform hover:scale-105">
               Modifier la configuration
             </button>
           </Link>

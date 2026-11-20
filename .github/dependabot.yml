@@ -1,9 +1,9 @@
 # Dependabot configuration.
-# Major updates of TypeScript and Tailwind CSS are ignored on purpose: both need a
-# deliberate migration (typescript-eslint peer range, Tailwind v4 config/CSS syntax).
-# Caution: these ignore rules only apply to version updates. Security updates may
-# still propose a major bump (e.g. Tailwind v4 to drop a vulnerable transitive
-# dependency); check for a patched version within the current major first.
+# Major updates of TypeScript are ignored on purpose: they need a deliberate
+# migration (typescript-eslint peer range). Tailwind CSS majors are no longer
+# ignored since the v4 migration; still review their visual impact before merging.
+# Caution: ignore rules only apply to version updates. Security updates may still
+# propose a major bump; check for a patched version within the current major first.
 version: 2
 updates:
   - package-ecosystem: "npm"
@@ -19,8 +19,6 @@ updates:
           - "patch"
     ignore:
       - dependency-name: "typescript"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "tailwindcss"
         update-types: ["version-update:semver-major"]
   - package-ecosystem: "github-actions"
     directory: "/"
