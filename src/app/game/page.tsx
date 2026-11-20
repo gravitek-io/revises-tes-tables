@@ -1,15 +1,26 @@
 "use client";
 
-
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
-import { ArrowLeft, Zap } from "lucide-react";
-import { toast } from "react-toastify";
+import { Flame, ThumbsUp, Target } from "lucide-react";
 import { GameStorage } from "@/lib/storage";
 import { GameEngine } from "@/lib/game";
 import { Question, GameSession, GameSettings } from "@/types";
+import PageHeader from "@/components/PageHeader";
+import PageLoader from "@/components/PageLoader";
+import Stamp from "@/components/Stamp";
+import TableSticker from "@/components/TableSticker";
 
+/** How long the feedback stays on screen before the next question, in ms. */
+const FEEDBACK_DELAY_CORRECT = 1500;
+const FEEDBACK_DELAY_WRONG = 2500;
+
+/**
+ * Game page: one question at a time. A right answer gets the teacher's
+ * « Bravo ! » stamp; a wrong one is crossed out in red pen with the right
+ * answer written next to it. At the end the session is saved and the child
+ * is sent to the results page.
+ */
 export default function GamePage() {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -44,15 +55,11 @@ export default function GamePage() {
   }, [isLoaded, currentQuestionIndex]);
 
   const currentQuestion = questions[currentQuestionIndex];
-  const progress =
-    questions.length > 0
-      ? ((currentQuestionIndex + 1) / questions.length) * 100
-      : 0;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!currentQuestion || userAnswer.trim() === "") return;
+    if (!currentQuestion || userAnswer.trim() === "" || showFeedback) return;
 
     const answerTime = Math.round((Date.now() - questionStartTime) / 1000);
     const userNum = parseInt(userAnswer);
@@ -68,23 +75,10 @@ export default function GamePage() {
     };
     setQuestions(updatedQuestions);
 
-    // Show feedback
+    // Show feedback on the question card
     setIsCorrect(correct);
     setShowFeedback(true);
-
-    // Update streak
-    if (correct) {
-      setStreak((prev) => prev + 1);
-      toast.success("Bravo ! 🎉", {
-        autoClose: 1000,
-        hideProgressBar: true,
-      });
-    } else {
-      setStreak(0);
-      toast.error(`Oups! La réponse était ${currentQuestion.answer}`, {
-        autoClose: 2000,
-      });
-    }
+    setStreak((prev) => (correct ? prev + 1 : 0));
 
     // Move to next question after feedback
     setTimeout(
@@ -100,7 +94,7 @@ export default function GamePage() {
           finishGame(updatedQuestions);
         }
       },
-      correct ? 1500 : 2500
+      correct ? FEEDBACK_DELAY_CORRECT : FEEDBACK_DELAY_WRONG
     );
   };
 
@@ -129,155 +123,169 @@ export default function GamePage() {
   };
 
   if (!isLoaded || !currentQuestion) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-4 border-white border-t-transparent mx-auto mb-4"></div>
-          <p className="text-white/80">Préparation de ta session...</p>
-        </div>
-      </div>
-    );
+    return <PageLoader label="Préparation de ta session…" />;
   }
 
+  const answered = questions.slice(0, currentQuestionIndex);
+  const correctSoFar = answered.filter((q) => q.isCorrect).length;
+  const wrongSoFar = answered.filter((q) => q.isCorrect === false).length;
+  const successRate =
+    currentQuestionIndex > 0 ? Math.round((correctSoFar / currentQuestionIndex) * 100) : 0;
+  const isWrongFeedback = showFeedback && !isCorrect;
+
   return (
-    <div className="min-h-screen p-4">
-      <div className="max-w-2xl mx-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <Link href="/">
-            <button className="p-2 bg-white/10 hover:bg-white/20 backdrop-blur-xs rounded-xl text-white transition-all duration-300 transform hover:scale-105">
-              <ArrowLeft className="h-6 w-6" />
-            </button>
-          </Link>
+    <div className="mx-auto w-full max-w-xl">
+      <PageHeader backLabel="Quitter la session et revenir à l'accueil">
+        {streak > 0 && (
+          <span key={streak} className="chip animate-pop bg-flame" aria-label={`${streak} bonnes réponses d'affilée`}>
+            <Flame className="h-4 w-4 fill-highlight text-pen" strokeWidth={2.5} aria-hidden />
+            {streak}
+          </span>
+        )}
+        <span className="chip" aria-label={`Question ${currentQuestionIndex + 1} sur ${questions.length}`}>
+          {currentQuestionIndex + 1} / {questions.length}
+        </span>
+      </PageHeader>
 
-          <div className="flex items-center space-x-4 text-white">
-            {streak > 0 && (
-              <div className="bg-linear-to-r/srgb from-orange-400 to-red-500 px-3 py-1 rounded-full text-sm font-semibold flex items-center space-x-1">
-                <Zap className="h-4 w-4" />
-                <span>{streak}</span>
-              </div>
-            )}
-            <div className="bg-white/10 backdrop-blur-xs px-4 py-2 rounded-xl font-semibold">
-              {currentQuestionIndex + 1} / {questions.length}
-            </div>
-          </div>
-        </div>
-
-        {/* Progress Bar */}
-        <div className="mb-8">
-          <div className="bg-white/10 rounded-full h-3 overflow-hidden">
-            <div
-              className="bg-linear-to-r/srgb from-green-400 to-blue-500 h-full transition-all duration-300 ease-out"
-              style={{ width: `${progress}%` }}
+      {/* Progress: one dot per question, green when right, red when wrong. */}
+      <ol className="mb-6 flex flex-wrap gap-1.5" aria-label="Progression de la session">
+        {questions.map((q, index) => {
+          const state =
+            index < currentQuestionIndex || (index === currentQuestionIndex && showFeedback)
+              ? q.isCorrect
+                ? "bg-success border-success"
+                : "bg-pen border-pen"
+              : index === currentQuestionIndex
+                ? "bg-highlight border-ink"
+                : "bg-paper border-ink-soft";
+          return (
+            <li
+              key={q.id}
+              className={`h-4 w-4 rounded-full border-2 transition-colors ${state}`}
+              aria-hidden
             />
-          </div>
-        </div>
+          );
+        })}
+      </ol>
 
-        {/* Question Card */}
-        <div className="bg-white/10 backdrop-blur-xs rounded-3xl p-8 mb-8 text-center relative overflow-hidden">
-          {showFeedback && (
-            <div
-              className={`absolute inset-0 flex items-end justify-center ${
-                isCorrect ? "bg-green-500/90" : "bg-red-500/90"
-              } backdrop-blur-xs transition-all duration-300`}
-            >
-              <div className="text-center">
-                {isCorrect ? (
-                  <>
-                    <p className="text-2xl font-bold text-white">Excellent !</p>
-                  </>
-                ) : (
-                  <>
-                    <p className="text-2xl font-bold text-white">
-                      La réponse était {currentQuestion.answer}
-                    </p>
-                  </>
-                )}
-              </div>
-            </div>
-          )}
+      <section
+        className={`card px-5 pt-8 pb-6 text-center md:px-8 ${isWrongFeedback ? "animate-shake" : ""}`}
+        aria-labelledby="question"
+      >
+        {showFeedback && isCorrect && (
+          <Stamp className="absolute -top-6 -right-3 md:-right-8">Bravo&nbsp;!</Stamp>
+        )}
 
-          <div className="text-6xl md:text-7xl font-bold text-white mb-8 bounce-in">
-            {currentQuestion.multiplicand} × {currentQuestion.multiplier} = ?
-          </div>
+        <TableSticker table={currentQuestion.multiplicand} size="sm" className="mb-2" />
+        <h1
+          id="question"
+          key={currentQuestion.id}
+          className="animate-pop font-display text-7xl leading-none font-black md:text-8xl"
+        >
+          {currentQuestion.multiplicand} × {currentQuestion.multiplier}
+          <span className="sr-only"> égale combien ?</span>
+        </h1>
 
-          <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} className="mt-7 flex items-center justify-center gap-3">
+          <div className="relative">
+            <label htmlFor="answer" className="sr-only">
+              Ta réponse
+            </label>
             <input
+              id="answer"
               ref={inputRef}
               type="number"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              autoComplete="off"
               value={userAnswer}
               onChange={(e) => setUserAnswer(e.target.value)}
-              className="w-32 h-16 text-3xl text-center bg-white/20 backdrop-blur-xs border-2 border-white/30 focus:border-white/60 rounded-xl text-white placeholder-white/50 outline-hidden transition-all duration-300"
+              className={`h-18 w-32 rounded-2xl border-[3px] bg-paper text-center font-display text-5xl font-black outline-none placeholder:text-rule-strong focus:border-focus disabled:opacity-100 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none ${
+                showFeedback ? (isCorrect ? "border-success text-success" : "border-pen") : "border-ink"
+              }`}
               placeholder="?"
               disabled={showFeedback}
               autoFocus
             />
+            {/* Red-pen line crossing out a wrong answer. */}
+            {isWrongFeedback && (
+              <span
+                className="absolute top-1/2 left-3 right-3 h-1.5 origin-left -rotate-6 animate-strike rounded-full bg-pen"
+                aria-hidden
+              />
+            )}
+          </div>
 
+          {isWrongFeedback ? (
+            <p className="w-32 font-hand text-5xl text-pen" aria-hidden>
+              {currentQuestion.answer}
+            </p>
+          ) : (
             <button
               type="submit"
               disabled={!userAnswer.trim() || showFeedback}
-              className="ml-4 bg-linear-to-r/srgb from-green-400 to-blue-500 hover:from-green-500 hover:to-blue-600 disabled:from-gray-400 disabled:to-gray-500 text-white font-bold py-4 px-8 rounded-xl transition-all duration-300 transform hover:scale-105 disabled:scale-100 disabled:cursor-not-allowed"
+              className="btn btn-primary h-18 w-32 text-xl"
             >
               Valider
             </button>
-          </form>
+          )}
+        </form>
 
-          <div className="mt-6 text-white/60 text-sm">
-            Appuies sur Entrée pour valider ta réponse
-          </div>
+        {/* Announces the outcome to screen readers. */}
+        <p className="sr-only" aria-live="assertive">
+          {showFeedback &&
+            (isCorrect ? "Bravo, c'est juste !" : `Pas tout à fait : la réponse était ${currentQuestion.answer}.`)}
+        </p>
+
+        <p className="mt-5 min-h-6 text-ink-soft">
+          {isWrongFeedback ? (
+            <>
+              Pas grave : retiens bien{" "}
+              <strong className="text-ink">
+                {currentQuestion.multiplicand} × {currentQuestion.multiplier} = {currentQuestion.answer}
+              </strong>
+            </>
+          ) : (
+            <span className="hidden sm:inline">Appuie sur Entrée pour valider ta réponse</span>
+          )}
+        </p>
+      </section>
+
+      <dl className="mt-6 grid grid-cols-3 divide-x-2 divide-dashed divide-rule-strong rounded-[1.375rem] border-[3px] border-ink bg-paper py-3 text-center">
+        <div className="flex flex-col">
+          <dt className="order-2 text-sm text-ink-soft">Bonnes</dt>
+          <dd className="order-1 font-display text-2xl font-black text-success">{correctSoFar}</dd>
         </div>
-
-        {/* Quick Stats */}
-        <div className="grid grid-cols-3 gap-4 text-center">
-          <div className="bg-white/10 backdrop-blur-xs rounded-xl p-4">
-            <div className="text-green-300 text-2xl font-bold">
-              {
-                questions
-                  .slice(0, currentQuestionIndex)
-                  .filter((q) => q.isCorrect).length
-              }
-            </div>
-            <div className="text-white/70 text-sm">Bonnes</div>
-          </div>
-
-          <div className="bg-white/10 backdrop-blur-xs rounded-xl p-4">
-            <div className="text-red-300 text-2xl font-bold">
-              {
-                questions
-                  .slice(0, currentQuestionIndex)
-                  .filter((q) => q.isCorrect === false).length
-              }
-            </div>
-            <div className="text-white/70 text-sm">Mauvaises</div>
-          </div>
-
-          <div className="bg-white/10 backdrop-blur-xs rounded-xl p-4">
-            <div className="text-blue-300 text-2xl font-bold">
-              {currentQuestionIndex > 0
-                ? Math.round(
-                    (questions
-                      .slice(0, currentQuestionIndex)
-                      .filter((q) => q.isCorrect).length /
-                      currentQuestionIndex) *
-                      100
-                  )
-                : 0}
-              %
-            </div>
-            <div className="text-white/70 text-sm">Réussite</div>
-          </div>
+        <div className="flex flex-col">
+          <dt className="order-2 text-sm text-ink-soft">Erreurs</dt>
+          <dd className="order-1 font-display text-2xl font-black text-pen">{wrongSoFar}</dd>
         </div>
-
-        {/* Encouragement */}
-        <div className="mt-6 text-center">
-          <p className="text-white/80 text-sm">
-            {streak >= 3 &&
-              `🔥 ${streak} bonnes réponses d'affilée ! Tu es en feu !`}
-            {streak < 3 && streak > 0 && `Continues comme ça ! 💪`}
-            {streak === 0 && `Concentres-toi bien ! 🎯`}
-          </p>
+        <div className="flex flex-col">
+          <dt className="order-2 text-sm text-ink-soft">Réussite</dt>
+          <dd className="order-1 font-display text-2xl font-black">{successRate} %</dd>
         </div>
-      </div>
+      </dl>
+
+      <p className="mt-5 flex items-center justify-center gap-2 font-bold">
+        {streak >= 3 && (
+          <>
+            <Flame className="h-5 w-5 fill-highlight text-pen" aria-hidden />
+            {streak} bonnes réponses d&apos;affilée ! Tu es en feu !
+          </>
+        )}
+        {streak < 3 && streak > 0 && (
+          <>
+            <ThumbsUp className="h-5 w-5 text-success" aria-hidden />
+            Continue comme ça !
+          </>
+        )}
+        {streak === 0 && (
+          <>
+            <Target className="h-5 w-5 text-pen" aria-hidden />
+            Concentre-toi bien !
+          </>
+        )}
+      </p>
     </div>
   );
 }

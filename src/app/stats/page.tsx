@@ -1,12 +1,51 @@
 'use client'
 
-
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, BarChart3, Calendar, Target, TrendingUp, Award, Clock } from 'lucide-react'
+import {
+  type LucideIcon,
+  TrendingUp,
+  TrendingDown,
+  MoveRight,
+  Trophy,
+  Medal,
+  Star,
+  Target,
+  ThumbsUp,
+  Dumbbell,
+  BadgeCheck,
+  Sparkles,
+  Footprints,
+  Rocket,
+  Scale,
+  Play,
+  Settings,
+} from 'lucide-react'
 import { GameStorage } from '@/lib/storage'
 import { SessionStats } from '@/types'
+import PageHeader from '@/components/PageHeader'
+import PageLoader from '@/components/PageLoader'
+import TableSticker from '@/components/TableSticker'
 
+type Trend = 'up' | 'down' | 'stable'
+
+const TREND_DISPLAY: Record<Trend, { label: string; Icon: LucideIcon; className: string }> = {
+  up: { label: 'En hausse', Icon: TrendingUp, className: 'text-success' },
+  down: { label: 'En baisse', Icon: TrendingDown, className: 'text-pen' },
+  stable: { label: 'Stable', Icon: MoveRight, className: 'text-ink' },
+}
+
+/** A "bon point" (the reward card French teachers hand out): icon, color and label. */
+interface GoodPoint {
+  Icon: LucideIcon
+  color: string
+  label: string
+}
+
+/**
+ * Progress page (« Mes progrès »): totals over every session, strongest and
+ * weakest tables, the last five sessions and the « bons points » earned.
+ */
 export default function StatsPage() {
   const [stats, setStats] = useState<SessionStats | null>(null)
   const [isLoaded, setIsLoaded] = useState(false)
@@ -17,37 +56,25 @@ export default function StatsPage() {
   }, [])
 
   if (!isLoaded) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-4 border-white border-t-transparent"></div>
-      </div>
-    )
+    return <PageLoader />
   }
 
   if (!stats || stats.totalSessions === 0) {
     return (
-      <div className="min-h-screen p-4">
-        <div className="max-w-4xl mx-auto">
-          <div className="flex items-center justify-between mb-8">
-            <Link href="/">
-              <button className="p-2 bg-white/10 hover:bg-white/20 backdrop-blur-xs rounded-xl text-white transition-all duration-300 transform hover:scale-105">
-                <ArrowLeft className="h-6 w-6" />
-              </button>
-            </Link>
-            <h1 className="text-3xl font-bold text-white">Statistiques</h1>
-            <div className="w-10" />
+      <div className="mx-auto w-full max-w-3xl">
+        <PageHeader title="Mes progrès" />
+        <div className="card mx-auto mt-10 max-w-md px-6 py-10 text-center">
+          <div className="mb-6 flex justify-center gap-2" aria-hidden>
+            <TableSticker table={2} decorative />
+            <TableSticker table={5} decorative />
+            <TableSticker table={9} decorative />
           </div>
-
-          <div className="text-center py-20">
-            <div className="text-8xl mb-8">📊</div>
-            <h2 className="text-2xl font-bold text-white mb-4">Aucune statistique disponible</h2>
-            <p className="text-white/80 mb-8">Joue quelques sessions pour voir tes progrès !</p>
-            <Link href="/game">
-              <button className="bg-linear-to-r/srgb from-green-400 to-blue-500 hover:from-green-500 hover:to-blue-600 text-white font-bold py-4 px-8 rounded-xl transition-all duration-300 transform hover:scale-105">
-                Commencer à jouer
-              </button>
-            </Link>
-          </div>
+          <h2 className="mb-2 font-display text-2xl font-extrabold">Pas encore de progrès à afficher</h2>
+          <p className="mb-8 text-ink-soft">Joue ta première session : tes progrès apparaîtront ici.</p>
+          <Link href="/game" className="btn btn-primary btn-lg w-full">
+            <Play className="h-6 w-6 fill-ink" strokeWidth={2.5} aria-hidden />
+            Commencer à jouer
+          </Link>
         </div>
       </div>
     )
@@ -60,198 +87,152 @@ export default function StatsPage() {
   // Calculate performance trend (compare last 5 vs previous 5 sessions)
   const recentSessions = stats.recentSessions.slice(0, 5)
   const previousSessions = stats.recentSessions.slice(5, 10)
-  
-  let trend = 'stable'
+
+  let trend: Trend = 'stable'
   if (recentSessions.length >= 3 && previousSessions.length >= 3) {
     const recentAverage = recentSessions.reduce((sum, s) => sum + (s.correctAnswers / s.questions.length), 0) / recentSessions.length
     const previousAverage = previousSessions.reduce((sum, s) => sum + (s.correctAnswers / s.questions.length), 0) / previousSessions.length
-    
+
     if (recentAverage > previousAverage + 0.1) trend = 'up'
     else if (recentAverage < previousAverage - 0.1) trend = 'down'
   }
+  const trendDisplay = TREND_DISPLAY[trend]
+
+  const goodPoints: GoodPoint[] = [
+    stats.totalSessions >= 10
+      ? { Icon: Trophy, color: 'var(--color-table-3)', label: 'Joueur régulier' }
+      : stats.totalSessions >= 5
+        ? { Icon: Medal, color: 'var(--color-table-2)', label: 'Bon élève' }
+        : { Icon: Star, color: 'var(--color-table-6)', label: 'Débutant' },
+    successRate >= 90
+      ? { Icon: Target, color: 'var(--color-table-1)', label: 'Expert' }
+      : successRate >= 70
+        ? { Icon: ThumbsUp, color: 'var(--color-table-4)', label: 'Bon niveau' }
+        : { Icon: Dumbbell, color: 'var(--color-table-7)', label: 'En progrès' },
+    stats.totalCorrectAnswers >= 100
+      ? { Icon: BadgeCheck, color: 'var(--color-table-5)', label: '100 bonnes réponses' }
+      : stats.totalCorrectAnswers >= 50
+        ? { Icon: Sparkles, color: 'var(--color-table-9)', label: '50 bonnes réponses' }
+        : { Icon: Footprints, color: 'var(--color-table-10)', label: 'Premiers pas' },
+    trend === 'up'
+      ? { Icon: Rocket, color: 'var(--color-table-8)', label: 'En progression' }
+      : trend === 'stable'
+        ? { Icon: Scale, color: 'var(--color-table-6)', label: 'Stable' }
+        : { Icon: TrendingUp, color: 'var(--color-table-2)', label: 'À améliorer' },
+  ]
 
   return (
-    <div className="min-h-screen p-4">
-      <div className="max-w-6xl mx-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <Link href="/">
-            <button className="p-2 bg-white/10 hover:bg-white/20 backdrop-blur-xs rounded-xl text-white transition-all duration-300 transform hover:scale-105">
-              <ArrowLeft className="h-6 w-6" />
-            </button>
-          </Link>
-          <div className="flex items-center space-x-3">
-            <BarChart3 className="h-8 w-8 text-white" />
-            <h1 className="text-3xl font-bold text-white">Tes Statistiques</h1>
+    <div className="mx-auto flex w-full max-w-4xl flex-col gap-6">
+      <PageHeader title="Mes progrès" />
+
+      <dl className="card grid grid-cols-2 px-2 py-2 md:grid-cols-4">
+        {[
+          { label: stats.totalSessions >= 2 ? 'sessions jouées' : 'session jouée', value: stats.totalSessions, className: '' },
+          { label: 'de réussite', value: `${Math.round(successRate)} %`, className: '' },
+          { label: stats.totalCorrectAnswers >= 2 ? 'bonnes réponses' : 'bonne réponse', value: stats.totalCorrectAnswers, className: 'text-success' },
+        ].map((item) => (
+          <div key={item.label} className="flex flex-col items-center px-2 py-4 text-center">
+            <dt className="order-2 text-ink-soft">{item.label}</dt>
+            <dd className={`order-1 font-display text-4xl font-black ${item.className}`}>{item.value}</dd>
           </div>
-          <div className="w-10" />
+        ))}
+        <div className="flex flex-col items-center px-2 py-4 text-center">
+          <dt className="order-2 text-ink-soft">tendance</dt>
+          <dd className={`order-1 flex items-center gap-1.5 font-display text-2xl font-black md:min-h-10 ${trendDisplay.className}`}>
+            <trendDisplay.Icon className="h-7 w-7" strokeWidth={3} aria-hidden />
+            {trendDisplay.label}
+          </dd>
         </div>
+      </dl>
 
-        {/* Global Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          <div className="bg-blue-500/20 backdrop-blur-xs rounded-xl p-6 text-center bounce-in">
-            <Calendar className="h-8 w-8 text-blue-300 mx-auto mb-2" />
-            <div className="text-3xl font-bold text-white mb-1">{stats.totalSessions}</div>
-            <div className="text-white/80 text-sm">Sessions jouées</div>
-          </div>
-          
-          <div className="bg-green-500/20 backdrop-blur-xs rounded-xl p-6 text-center bounce-in">
-            <Target className="h-8 w-8 text-green-300 mx-auto mb-2" />
-            <div className="text-3xl font-bold text-white mb-1">{Math.round(successRate)}%</div>
-            <div className="text-white/80 text-sm">Taux de réussite</div>
-          </div>
-          
-          <div className="bg-yellow-500/20 backdrop-blur-xs rounded-xl p-6 text-center bounce-in">
-            <Award className="h-8 w-8 text-yellow-300 mx-auto mb-2" />
-            <div className="text-3xl font-bold text-white mb-1">{stats.totalCorrectAnswers}</div>
-            <div className="text-white/80 text-sm">Bonnes réponses</div>
-          </div>
-          
-          <div className="bg-purple-500/20 backdrop-blur-xs rounded-xl p-6 text-center bounce-in">
-            <TrendingUp className={`h-8 w-8 mx-auto mb-2 ${
-              trend === 'up' ? 'text-green-300' : 
-              trend === 'down' ? 'text-red-300' : 
-              'text-purple-300'
-            }`} />
-            <div className="text-3xl font-bold text-white mb-1">
-              {trend === 'up' ? '📈' : trend === 'down' ? '📉' : '➡️'}
-            </div>
-            <div className="text-white/80 text-sm">Tendance</div>
-          </div>
-        </div>
-
-        {/* Performance Analysis */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-          {/* Tables Performance */}
-          <div className="bg-white/10 backdrop-blur-xs rounded-2xl p-6 slide-up">
-            <h2 className="text-xl font-bold text-white mb-6 flex items-center">
-              <Target className="h-6 w-6 mr-2" />
-              Performance par table
-            </h2>
-            
-            <div className="space-y-3">
-              {stats.strongestTable && (
-                <div className="flex items-center justify-between p-3 bg-green-500/20 rounded-lg">
-                  <span className="text-white font-medium">Table la plus forte</span>
-                  <span className="text-green-300 font-bold">× {stats.strongestTable}</span>
-                </div>
-              )}
-              
-              {stats.weakestTable && (
-                <div className="flex items-center justify-between p-3 bg-red-500/20 rounded-lg">
-                  <span className="text-white font-medium">Table à améliorer</span>
-                  <span className="text-red-300 font-bold">× {stats.weakestTable}</span>
-                </div>
-              )}
-              
-              <div className="flex items-center justify-between p-3 bg-blue-500/20 rounded-lg">
-                <span className="text-white font-medium">Questions par session</span>
-                <span className="text-blue-300 font-bold">{Math.round(averageQuestionsPerSession)}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Recent Progress */}
-          <div className="bg-white/10 backdrop-blur-xs rounded-2xl p-6 slide-up">
-            <h2 className="text-xl font-bold text-white mb-6 flex items-center">
-              <Clock className="h-6 w-6 mr-2" />
-              Progrès récents
-            </h2>
-            
-            <div className="space-y-3">
-              {stats.recentSessions.slice(0, 5).map((session, index) => (
-                <div key={session.id} className="flex items-center justify-between p-3 bg-white/5 rounded-lg">
-                  <div>
-                    <div className="text-white font-medium">
-                      Session #{stats.totalSessions - index}
-                    </div>
-                    <div className="text-white/60 text-xs">
-                      {new Date(session.date).toLocaleDateString('fr-FR')}
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className={`font-bold ${
-                      (session.correctAnswers / session.questions.length) >= 0.8 ? 'text-green-300' :
-                      (session.correctAnswers / session.questions.length) >= 0.6 ? 'text-yellow-300' :
-                      'text-red-300'
-                    }`}>
-                      {Math.round((session.correctAnswers / session.questions.length) * 100)}%
-                    </div>
-                    <div className="text-white/60 text-xs">
-                      {session.correctAnswers}/{session.questions.length}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Achievements */}
-        <div className="bg-linear-to-r/srgb from-purple-400/20 to-pink-400/20 backdrop-blur-xs rounded-2xl p-6 mb-8 bounce-in">
-          <h2 className="text-xl font-bold text-white mb-6 flex items-center">
-            <Award className="h-6 w-6 mr-2" />
-            Tes accomplissements
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <section className="card p-5" aria-labelledby="tables-performance">
+          <h2 id="tables-performance" className="mb-4 font-display text-xl font-extrabold">
+            Tes tables
           </h2>
-          
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="text-center">
-              <div className="text-2xl mb-2">
-                {stats.totalSessions >= 10 ? '🏆' : stats.totalSessions >= 5 ? '🥇' : '🌟'}
-              </div>
-              <div className="text-white/80 text-sm">
-                {stats.totalSessions >= 10 ? 'Joueur régulier' : 
-                 stats.totalSessions >= 5 ? 'Bon élève' : 'Débutant'}
-              </div>
-            </div>
-            
-            <div className="text-center">
-              <div className="text-2xl mb-2">
-                {successRate >= 90 ? '🎯' : successRate >= 70 ? '🎪' : '💪'}
-              </div>
-              <div className="text-white/80 text-sm">
-                {successRate >= 90 ? 'Expert' : 
-                 successRate >= 70 ? 'Bon niveau' : 'En progrès'}
-              </div>
-            </div>
-            
-            <div className="text-center">
-              <div className="text-2xl mb-2">
-                {stats.totalCorrectAnswers >= 100 ? '💯' : stats.totalCorrectAnswers >= 50 ? '🌟' : '🎈'}
-              </div>
-              <div className="text-white/80 text-sm">
-                {stats.totalCorrectAnswers >= 100 ? 'Centurion' : 
-                 stats.totalCorrectAnswers >= 50 ? 'Cinquantenaire' : 'Débutant'}
-              </div>
-            </div>
-            
-            <div className="text-center">
-              <div className="text-2xl mb-2">
-                {trend === 'up' ? '🚀' : trend === 'stable' ? '⚖️' : '📈'}
-              </div>
-              <div className="text-white/80 text-sm">
-                {trend === 'up' ? 'En progression' : 
-                 trend === 'stable' ? 'Stable' : 'À améliorer'}
-              </div>
-            </div>
-          </div>
-        </div>
+          <ul className="flex flex-col divide-y-2 divide-dashed divide-rule-strong">
+            {stats.strongestTable && (
+              <li className="flex items-center gap-3 py-3">
+                <TableSticker table={stats.strongestTable} decorative />
+                <span className="flex-1">Ta table la plus forte</span>
+                <span className="font-display text-xl font-black text-success">× {stats.strongestTable}</span>
+              </li>
+            )}
+            {stats.weakestTable && (
+              <li className="flex items-center gap-3 py-3">
+                <TableSticker table={stats.weakestTable} decorative />
+                <span className="flex-1">Ta table à réviser</span>
+                <span className="font-display text-xl font-black text-pen">× {stats.weakestTable}</span>
+              </li>
+            )}
+            <li className="flex items-center gap-3 py-3">
+              <span className="flex-1">Questions par session, en moyenne</span>
+              <span className="font-display text-xl font-black">{Math.round(averageQuestionsPerSession)}</span>
+            </li>
+          </ul>
+        </section>
 
-        {/* Actions */}
-        <div className="text-center">
-          <Link href="/game">
-            <button className="bg-linear-to-r/srgb from-green-400 to-blue-500 hover:from-green-500 hover:to-blue-600 text-white font-bold py-4 px-8 rounded-xl transition-all duration-300 transform hover:scale-105 mr-4">
-              Continuer à jouer
-            </button>
-          </Link>
-          
-          <Link href="/config">
-            <button className="bg-white/10 hover:bg-white/20 backdrop-blur-xs text-white font-semibold py-4 px-8 rounded-xl transition-all duration-300 transform hover:scale-105">
-              Modifier la configuration
-            </button>
-          </Link>
-        </div>
+        <section className="card p-5" aria-labelledby="recent-sessions">
+          <h2 id="recent-sessions" className="mb-4 font-display text-xl font-extrabold">
+            Tes dernières sessions
+          </h2>
+          <ol className="flex flex-col divide-y-2 divide-dashed divide-rule-strong">
+            {recentSessions.map((session, index) => {
+              const rate = session.correctAnswers / session.questions.length
+              const gradeColor = rate >= 0.8 ? 'text-success' : rate >= 0.6 ? 'text-ink' : 'text-pen'
+              return (
+                <li key={session.id} className="flex items-center justify-between gap-3 py-3">
+                  <div>
+                    <p className="font-bold">Session n° {stats.totalSessions - index}</p>
+                    <p className="text-sm text-ink-soft">
+                      {new Date(session.date).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
+                    </p>
+                  </div>
+                  <p className={`font-hand text-2xl ${gradeColor}`}>
+                    {session.correctAnswers}/{session.questions.length}
+                  </p>
+                </li>
+              )
+            })}
+          </ol>
+        </section>
       </div>
+
+      <section aria-labelledby="good-points">
+        <h2 id="good-points" className="mb-3 font-display text-2xl font-extrabold">
+          Tes bons points
+        </h2>
+        <ul className="grid grid-cols-2 gap-3 md:grid-cols-4">
+          {goodPoints.map(({ Icon, color, label }, index) => (
+            <li
+              key={label}
+              className={`flex flex-col items-center gap-2 rounded-2xl border-[3px] border-ink bg-paper px-3 py-4 text-center ${
+                index % 2 === 0 ? '-rotate-1' : 'rotate-1'
+              }`}
+            >
+              <span
+                className="grid h-14 w-14 place-items-center rounded-full text-ink shadow-[inset_0_-3px_0_rgb(0_0_0/0.14)]"
+                style={{ backgroundColor: color }}
+                aria-hidden
+              >
+                <Icon className="h-7 w-7" strokeWidth={2.5} />
+              </span>
+              <span className="font-display font-extrabold leading-tight">{label}</span>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <nav className="grid grid-cols-1 gap-4 md:grid-cols-2" aria-label="Et maintenant ?">
+        <Link href="/game" className="btn btn-primary btn-lg">
+          <Play className="h-6 w-6 fill-ink" strokeWidth={2.5} aria-hidden />
+          Continuer à jouer
+        </Link>
+        <Link href="/config" className="btn btn-lg">
+          <Settings className="h-6 w-6" strokeWidth={2.5} aria-hidden />
+          Modifier les réglages
+        </Link>
+      </nav>
     </div>
   )
 }

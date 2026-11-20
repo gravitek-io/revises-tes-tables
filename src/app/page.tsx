@@ -2,10 +2,18 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Play, Settings, BarChart3, Sparkles, Calculator } from "lucide-react";
+import { Play, Settings, TrendingUp, Building2, Mail, PartyPopper } from "lucide-react";
 import { GameStorage } from "@/lib/storage";
+import { describeTables, pluralize } from "@/lib/format";
 import { GameSettings, SessionStats } from "@/types";
+import PageLoader from "@/components/PageLoader";
+import TableSticker from "@/components/TableSticker";
 
+/**
+ * Home page: the main call to action (start a session), a reminder of the
+ * current settings, links to settings and progress, and a summary of past
+ * sessions once the child has played.
+ */
 export default function HomePage() {
   const [settings, setSettings] = useState<GameSettings | null>(null);
   const [stats, setStats] = useState<SessionStats | null>(null);
@@ -18,152 +26,131 @@ export default function HomePage() {
   }, []);
 
   if (!isLoaded) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-4 border-white border-t-transparent"></div>
-      </div>
-    );
+    return <PageLoader />;
   }
 
+  const hasPlayed = Boolean(stats && stats.totalSessions > 0);
+
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-4">
-      <div className="max-w-2xl w-full">
-        {/* Header */}
-        <div className="text-center mb-12 slide-up">
-          <div className="flex items-center justify-center mb-6">
-            <Calculator className="h-16 w-16 text-white/90 mr-4" />
-            <Sparkles className="h-8 w-8 text-yellow-300 animate-pulse" />
-          </div>
-          <h1 className="text-5xl md:text-6xl font-bold text-white mb-4 text-balance">
-            Tables de Multiplication
-          </h1>
-          <p className="text-xl text-white/80 text-balance">
-            Révises tes tables de multiplication de façon ludique et amusante !
+    <div className="mx-auto flex w-full max-w-xl flex-col gap-6 pt-4 md:pt-12">
+      <header>
+        {/* « 7 × 8 » spelled with stickers: the app's signature in one glance. */}
+        <div className="mb-4 flex gap-1.5" aria-hidden>
+          <TableSticker table={7} size="sm" decorative />
+          <span className="inline-grid h-8 w-8 place-items-center rounded-full bg-highlight font-display font-black">
+            ×
+          </span>
+          <TableSticker table={8} size="sm" decorative />
+        </div>
+        <h1 className="font-display text-4xl leading-[1.05] font-black text-balance sm:text-5xl md:text-6xl">
+          Révise tes tables de multiplication&nbsp;!
+        </h1>
+        {settings && (
+          <p className="mt-4 text-lg text-ink-soft">
+            {pluralize(settings.numberOfQuestions, "question", "questions")} sur{" "}
+            {describeTables(settings.selectedTables)}.
           </p>
-        </div>
-
-        {/* Quick Stats */}
-        {stats && stats.totalSessions > 0 && (
-          <div className="bg-white/10 backdrop-blur-xs rounded-2xl p-6 mb-8 bounce-in">
-            <h2 className="text-white font-semibold mb-4 flex items-center">
-              <BarChart3 className="h-5 w-5 mr-2" />
-              Tes derniers progrès
-            </h2>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-              <div>
-                <div className="text-2xl font-bold text-white">
-                  {stats.totalSessions}
-                </div>
-                <div className="text-white/70 text-sm">Sessions</div>
-              </div>
-              <div>
-                <div className="text-2xl font-bold text-green-300">
-                  {stats.totalCorrectAnswers}
-                </div>
-                <div className="text-white/70 text-sm">Bonnes réponses</div>
-              </div>
-              <div>
-                <div className="text-2xl font-bold text-blue-300">
-                  {Math.round(stats.averageScore)}%
-                </div>
-                <div className="text-white/70 text-sm">Score moyen</div>
-              </div>
-              <div>
-                <div className="text-2xl font-bold text-yellow-300">
-                  {stats.strongestTable ? `×${stats.strongestTable}` : "---"}
-                </div>
-                <div className="text-white/70 text-sm">Table forte</div>
-              </div>
-            </div>
-          </div>
         )}
+      </header>
 
-        {/* Main Actions */}
-        <div className="space-y-4">
-          {/* Start Game Button (block: space-y spacing needs a block-level child) */}
-          <Link href="/game" className="block">
-            <button className="w-full bg-linear-to-r/srgb from-green-400 to-blue-500 hover:from-green-500 hover:to-blue-600 text-white font-bold py-6 px-8 rounded-2xl text-xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl flex items-center justify-center space-x-3 bounce-in">
-              <Play className="h-8 w-8" />
-              <span>Commencer à jouer</span>
-            </button>
+      <nav className="flex flex-col gap-4" aria-label="Actions principales">
+        <Link href="/game" className="btn btn-primary btn-lg">
+          <Play className="h-7 w-7 fill-ink" strokeWidth={2.5} aria-hidden />
+          Commencer à jouer
+        </Link>
+        <div className="grid grid-cols-2 gap-3">
+          <Link href="/config" className="btn">
+            <Settings className="h-5 w-5 shrink-0" strokeWidth={2.5} aria-hidden />
+            Réglages
           </Link>
-
-          {/* Settings Display */}
-          {settings && (
-            <div className="bg-white/10 backdrop-blur-xs rounded-xl p-4 text-white/80 text-center slide-up">
-              <p className="text-sm">
-                {settings.numberOfQuestions} questions • Tables:{" "}
-                {settings.selectedTables.join(", ")}
-              </p>
-            </div>
-          )}
-
-          {/* Secondary Actions */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Link href="/config">
-              <button className="w-full bg-white/10 hover:bg-white/20 backdrop-blur-xs text-white font-semibold py-4 px-6 rounded-xl transition-all duration-300 transform hover:scale-105 flex items-center justify-center space-x-2 slide-up">
-                <Settings className="h-5 w-5" />
-                <span>Configuration</span>
-              </button>
-            </Link>
-
-            <Link href="/stats">
-              <button className="w-full bg-white/10 hover:bg-white/20 backdrop-blur-xs text-white font-semibold py-4 px-6 rounded-xl transition-all duration-300 transform hover:scale-105 flex items-center justify-center space-x-2 slide-up">
-                <BarChart3 className="h-5 w-5" />
-                <span>Statistiques</span>
-              </button>
-            </Link>
-          </div>
+          <Link href="/stats" className="btn">
+            <TrendingUp className="h-5 w-5 shrink-0" strokeWidth={2.5} aria-hidden />
+            Mes progrès
+          </Link>
         </div>
+      </nav>
 
-        {/* Welcome Message for First Time */}
-        {!stats || stats.totalSessions === 0 ? (
-          <div className="mt-8 text-center">
-            <div className="bg-linear-to-r/srgb from-purple-400/20 to-pink-400/20 backdrop-blur-xs rounded-xl p-6 slide-up">
-              <h2 className="text-white font-semibold mb-2">
-                Première visite ? 🎉
-              </h2>
-              <p className="text-white/80 text-sm">
-                Configure d&apos;abord tes paramètres, puis commence à réviser
-                tes tables !
-              </p>
+      {hasPlayed && stats ? (
+        <section className="card mt-4 p-5" aria-labelledby="recent-progress">
+          {/* A strip of tape holding the sheet on the notebook. */}
+          <span
+            className="absolute -top-3.5 left-1/2 h-6 w-24 -translate-x-1/2 -rotate-3 rounded-sm bg-highlight/80"
+            aria-hidden
+          />
+          <h2 id="recent-progress" className="mb-4 font-display text-xl font-extrabold">
+            Tes derniers progrès
+          </h2>
+          <dl className="grid grid-cols-2 gap-x-4 gap-y-4">
+            <div className="flex flex-col-reverse">
+              <dt className="text-ink-soft">{stats.totalSessions >= 2 ? "sessions" : "session"}</dt>
+              <dd className="font-display text-3xl font-black">{stats.totalSessions}</dd>
             </div>
-          </div>
-        ) : (
-          <div className="mt-8 text-center">
-            <p className="text-white/60 text-sm">
-              Bon retour ! Prêt pour une nouvelle session ?
+            <div className="flex flex-col-reverse">
+              <dt className="text-ink-soft">de réussite en moyenne</dt>
+              <dd className="font-display text-3xl font-black">
+                {Math.round(stats.averageScore)} %
+              </dd>
+            </div>
+            <div className="flex flex-col-reverse">
+              <dt className="text-ink-soft">
+                {stats.totalCorrectAnswers >= 2 ? "bonnes réponses" : "bonne réponse"}
+              </dt>
+              <dd className="font-display text-3xl font-black text-success">
+                {stats.totalCorrectAnswers}
+              </dd>
+            </div>
+            {stats.strongestTable && (
+              <div className="flex items-center gap-3">
+                <dt className="order-2 leading-snug text-ink-soft">ta table la plus forte</dt>
+                <dd className="order-1">
+                  <TableSticker table={stats.strongestTable} />
+                </dd>
+              </div>
+            )}
+          </dl>
+        </section>
+      ) : (
+        <section className="card mt-2 flex gap-4 p-5" aria-labelledby="first-visit">
+          <PartyPopper className="h-8 w-8 shrink-0 text-pen" strokeWidth={2.25} aria-hidden />
+          <div>
+            <h2 id="first-visit" className="font-display text-xl font-extrabold">
+              Première visite&nbsp;?
+            </h2>
+            <p className="mt-1 text-ink-soft">
+              Choisis tes tables dans les réglages, puis lance ta première session !
             </p>
           </div>
-        )}
-      </div>
+        </section>
+      )}
 
-      <footer className="pt-16 text-center">
-        <div className="bg-white/5 backdrop-blur-xs rounded-xl p-6 mb-4">
-          <h2 className="text-white font-semibold mb-3 text-lg">
-            Application développée par Gravitek
-          </h2>
-          <p className="text-white/70 text-sm mb-4">
-            Outil éducatif gratuit et open source pour l&apos;apprentissage des
-            mathématiques
-          </p>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 text-sm">
-            <a
-              href="https://gravitek.io"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-300 hover:text-blue-200 font-medium transition-colors"
-            >
-              🏢 Découvrir Gravitek
-            </a>
+      {hasPlayed && (
+        <p className="text-center font-hand text-lg text-ink-soft">
+          Bon retour ! Prêt pour une nouvelle session ?
+        </p>
+      )}
 
-            <a
-              href="mailto:hello@gravitek.io"
-              className="text-yellow-300 hover:text-yellow-200 font-medium transition-colors"
-            >
-              ✉️ Nous contacter
-            </a>
-          </div>
+      <footer className="mt-10 border-t-2 border-dashed border-rule-strong pt-6 text-center">
+        <p className="font-display font-extrabold">Application développée par Gravitek</p>
+        <p className="mt-1 text-sm text-ink-soft">
+          Outil éducatif gratuit et open source pour apprendre les mathématiques
+        </p>
+        <div className="mt-4 flex flex-col items-center justify-center gap-3 text-sm font-bold sm:flex-row sm:gap-6">
+          <a
+            href="https://gravitek.io"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 underline decoration-2 underline-offset-4 hover:text-pen"
+          >
+            <Building2 className="h-4 w-4" aria-hidden />
+            Découvrir Gravitek
+          </a>
+          <a
+            href="mailto:hello@gravitek.io"
+            className="inline-flex items-center gap-1.5 underline decoration-2 underline-offset-4 hover:text-pen"
+          >
+            <Mail className="h-4 w-4" aria-hidden />
+            Nous contacter
+          </a>
         </div>
       </footer>
     </div>

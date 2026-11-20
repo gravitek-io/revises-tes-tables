@@ -1,13 +1,30 @@
 'use client'
 
-
 import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { Home, RotateCcw, Target, TrendingUp, Frown, Smile } from 'lucide-react'
+import { Home, RotateCcw, Check, type LucideIcon, Trophy, Star, Dumbbell, Sprout } from 'lucide-react'
 import { GameEngine } from '@/lib/game'
+import { pluralize } from '@/lib/format'
 import { GameSession, Question } from '@/types'
+import GradeCircle from '@/components/GradeCircle'
+import PageLoader from '@/components/PageLoader'
+import Stamp from '@/components/Stamp'
+import TableSticker from '@/components/TableSticker'
 
+/** Performance level stamped next to the grade (same tiers as the encouragement messages). */
+function performanceLevel(percentage: number): { label: string; Icon: LucideIcon; tone: 'success' | 'ink' } {
+  if (percentage >= 90) return { label: 'Champion', Icon: Trophy, tone: 'success' }
+  if (percentage >= 70) return { label: 'Très bien', Icon: Star, tone: 'success' }
+  if (percentage >= 50) return { label: 'Pas mal', Icon: Dumbbell, tone: 'ink' }
+  return { label: 'Continue', Icon: Sprout, tone: 'ink' }
+}
+
+/**
+ * Results page: the grade as a teacher would write it, the encouragement
+ * message, per-table results and the answers to review. The session arrives
+ * in the `session` query parameter (static export: no server to fetch it from).
+ */
 function ResultsContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -33,16 +50,13 @@ function ResultsContent() {
   }, [searchParams, router])
 
   if (!isLoaded || !session) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-4 border-white border-t-transparent"></div>
-      </div>
-    )
+    return <PageLoader />
   }
 
   const { correct, incorrect, percentage, weakestTable } = GameEngine.calculateScore(session.questions)
   const encouragement = GameEngine.getEncouragementMessage(percentage, weakestTable)
-  
+  const level = performanceLevel(percentage)
+
   const averageTime = session.questions.reduce((sum, q) => sum + (q.timeToAnswer || 0), 0) / session.questions.length
 
   // Group questions by table for detailed analysis
@@ -58,171 +72,144 @@ function ResultsContent() {
     }
   })
 
+  const mistakes = session.questions.filter(q => !q.isCorrect)
+
   return (
-    <div className="min-h-screen p-4">
-      <div className="max-w-4xl mx-auto">
-        {/* Header with Encouragement */}
-        <div className="text-center mb-8">
-          <div className="text-8xl mb-4 bounce-in">
-            {encouragement.emoji}
-          </div>
-          <h1 className="text-4xl md:text-5xl font-bold text-white mb-4 slide-up">
-            Session terminée !
-          </h1>
-          <div className="bg-linear-to-r/srgb from-purple-400/20 to-pink-400/20 backdrop-blur-xs rounded-2xl p-6 slide-up">
-            <p className="text-xl text-white text-balance">
-              {encouragement.message}
-            </p>
-          </div>
+    <div className="mx-auto flex w-full max-w-3xl flex-col gap-6 pt-2">
+      {/* Grade: the page's one big moment (circle drawn, then the stamp lands). */}
+      <header className="text-center">
+        <h1 className="font-display text-4xl font-black md:text-5xl">Session terminée&nbsp;!</h1>
+        <div className="relative mt-6 inline-flex items-center">
+          <GradeCircle correct={correct} total={session.questions.length} />
+          <Stamp
+            tone={level.tone}
+            rotate={10}
+            className="absolute -right-24 -top-6 h-24 w-24 text-base [animation-delay:0.8s] md:-right-32 md:h-28 md:w-28 md:text-lg"
+          >
+            <span className="flex flex-col items-center">
+              <level.Icon className="h-6 w-6" strokeWidth={2.5} aria-hidden />
+              {level.label}
+            </span>
+          </Stamp>
         </div>
+        <p className="mx-auto mt-6 max-w-[34ch] font-hand text-xl leading-relaxed text-balance md:text-2xl">
+          {encouragement.message}
+        </p>
+      </header>
 
-        {/* Main Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          <div className="bg-green-500/20 backdrop-blur-xs rounded-xl p-6 text-center bounce-in">
-            <div className="text-3xl font-bold text-green-300 mb-2">{correct}</div>
-            <div className="text-white/80 text-sm">Bonnes réponses</div>
-          </div>
-          
-          <div className="bg-red-500/20 backdrop-blur-xs rounded-xl p-6 text-center bounce-in">
-            <div className="text-3xl font-bold text-red-300 mb-2">{incorrect}</div>
-            <div className="text-white/80 text-sm">Erreurs</div>
-          </div>
-          
-          <div className="bg-blue-500/20 backdrop-blur-xs rounded-xl p-6 text-center bounce-in">
-            <div className="text-3xl font-bold text-blue-300 mb-2">{percentage}%</div>
-            <div className="text-white/80 text-sm">Score</div>
-          </div>
-          
-          <div className="bg-yellow-500/20 backdrop-blur-xs rounded-xl p-6 text-center bounce-in">
-            <div className="text-3xl font-bold text-yellow-300 mb-2">{Math.round(averageTime)}s</div>
-            <div className="text-white/80 text-sm">Temps moyen</div>
-          </div>
+      <dl className="card grid grid-cols-1 divide-y-2 divide-dashed divide-rule-strong px-5 sm:grid-cols-3 sm:divide-x-2 sm:divide-y-0 sm:py-2">
+        <div className="flex items-baseline gap-3 py-3 sm:flex-col sm:items-center sm:gap-0">
+          <dt className="order-2">{correct >= 2 ? 'bonnes réponses' : 'bonne réponse'}</dt>
+          <dd className="order-1 min-w-14 font-display text-4xl font-black text-success">{correct}</dd>
         </div>
-
-        {/* Performance Badge */}
-        <div className="mb-8 flex justify-center">
-          <div className={`px-8 py-4 rounded-2xl font-bold text-xl ${
-            percentage >= 90 ? 'bg-linear-to-r/srgb from-yellow-400 to-orange-500 text-white' :
-            percentage >= 70 ? 'bg-linear-to-r/srgb from-green-400 to-blue-500 text-white' :
-            percentage >= 50 ? 'bg-linear-to-r/srgb from-blue-400 to-purple-500 text-white' :
-            'bg-linear-to-r/srgb from-purple-400 to-pink-500 text-white'
-          } wiggle`}>
-            {percentage >= 90 ? '🏆 Champion' :
-             percentage >= 70 ? '⭐ Très bien' :
-             percentage >= 50 ? '💪 Pas mal' :
-             '🌱 Continue'}
-          </div>
+        <div className="flex items-baseline gap-3 py-3 sm:flex-col sm:items-center sm:gap-0">
+          <dt className="order-2">{incorrect >= 2 ? 'erreurs' : 'erreur'}</dt>
+          <dd className="order-1 min-w-14 font-display text-4xl font-black text-pen">{incorrect}</dd>
         </div>
+        <div className="flex items-baseline gap-3 py-3 sm:flex-col sm:items-center sm:gap-0">
+          <dt className="order-2">par question en moyenne</dt>
+          <dd className="order-1 min-w-14 font-display text-4xl font-black">{Math.round(averageTime)} s</dd>
+        </div>
+      </dl>
 
-        {/* Detailed Analysis */}
-        <div className="bg-white/10 backdrop-blur-xs rounded-2xl p-6 mb-8 slide-up">
-          <h2 className="text-2xl font-bold text-white mb-6 flex items-center">
-            <TrendingUp className="h-6 w-6 mr-2" />
-            Analyse détaillée par table
+      <section aria-labelledby="tables-detail">
+        <h2 id="tables-detail" className="mb-3 font-display text-2xl font-extrabold">
+          Tes tables
+        </h2>
+        <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          {Object.entries(tableStats)
+            .sort(([a], [b]) => parseInt(a) - parseInt(b))
+            .map(([table, stats]) => {
+              const tableNumber = parseInt(table)
+              const isPerfect = stats.correct === stats.total
+              const isWeak = tableNumber === weakestTable
+
+              return (
+                <li
+                  key={table}
+                  className={`flex items-center gap-3 rounded-2xl border-[3px] bg-paper p-3 ${
+                    isWeak ? 'border-pen' : 'border-ink'
+                  }`}
+                >
+                  <TableSticker table={tableNumber} decorative />
+                  <div className="flex-1">
+                    <p className="font-display text-lg font-extrabold">Table de {table}</p>
+                    <p className={isWeak ? 'font-bold text-pen' : 'text-ink-soft'}>
+                      {isWeak ? 'À réviser' : `${Math.round((stats.correct / stats.total) * 100)} % de réussite`}
+                    </p>
+                  </div>
+                  <p className="flex items-center gap-1 font-display text-xl font-black">
+                    {isPerfect && <Check className="h-5 w-5 text-success" strokeWidth={3.5} aria-hidden />}
+                    {stats.correct}/{stats.total}
+                  </p>
+                </li>
+              )
+            })}
+        </ul>
+      </section>
+
+      {incorrect > 0 && (
+        <section className="card p-5" aria-labelledby="mistakes">
+          <h2 id="mistakes" className="mb-1 font-display text-2xl font-extrabold">
+            Tes erreurs à revoir
           </h2>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {Object.entries(tableStats)
-              .sort(([a], [b]) => parseInt(a) - parseInt(b))
-              .map(([table, stats]) => {
-                const rate = (stats.correct / stats.total) * 100
-                const isWeak = parseInt(table) === weakestTable
-                
-                return (
-                  <div key={table} className={`p-4 rounded-xl ${
-                    rate >= 80 ? 'bg-green-500/20' :
-                    rate >= 60 ? 'bg-yellow-500/20' :
-                    'bg-red-500/20'
-                  } ${isWeak ? 'ring-2 ring-red-400' : ''}`}>
-                    <div className="flex items-center justify-between mb-2">
-                      <h3 className="font-semibold text-white">Table × {table}</h3>
-                      {rate >= 80 ? <Smile className="h-5 w-5 text-green-400" /> : 
-                       rate < 60 ? <Frown className="h-5 w-5 text-red-400" /> : 
-                       <Target className="h-5 w-5 text-yellow-400" />}
-                    </div>
-                    <div className="text-2xl font-bold text-white mb-1">
-                      {stats.correct} / {stats.total}
-                    </div>
-                    <div className="text-sm text-white/70">
-                      {Math.round(rate)}% de réussite
-                    </div>
-                    {isWeak && (
-                      <div className="text-xs text-red-300 mt-2">
-                        💡 Table à réviser
-                      </div>
-                    )}
-                  </div>
-                )
-              })}
-          </div>
-        </div>
+          <p className="mb-4 text-ink-soft">
+            {pluralize(mistakes.length, 'calcul corrigé', 'calculs corrigés')} au stylo rouge.
+          </p>
+          <ul className="grid grid-cols-1 gap-x-6 gap-y-3 md:grid-cols-2">
+            {mistakes.map((q) => (
+              <li key={q.id} className="flex items-baseline gap-3 font-display text-2xl font-black">
+                <span>
+                  {q.multiplicand} × {q.multiplier} =
+                </span>
+                {q.userAnswer !== undefined && !Number.isNaN(q.userAnswer) && (
+                  <span className="text-ink-soft line-through decoration-pen decoration-[3px]">
+                    <span className="sr-only">tu avais répondu </span>
+                    {q.userAnswer}
+                  </span>
+                )}
+                <span className="font-hand text-3xl font-normal text-pen">
+                  <span className="sr-only">, la bonne réponse est </span>
+                  {q.answer}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
-        {/* Quick Review */}
-        {incorrect > 0 && (
-          <div className="bg-red-500/10 backdrop-blur-xs rounded-2xl p-6 mb-8 slide-up">
-            <h3 className="text-xl font-bold text-white mb-4">Révision rapide des erreurs</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {session.questions
-                .filter(q => !q.isCorrect)
-                .map((q, index) => (
-                  <div key={index} className="bg-white/10 rounded-lg p-3 text-center">
-                    <span className="text-white font-medium">
-                      {q.multiplicand} × {q.multiplier} = {q.answer}
-                    </span>
-                    {q.userAnswer && (
-                      <span className="text-red-300 text-sm block">
-                        Tu avais répondu: {q.userAnswer}
-                      </span>
-                    )}
-                  </div>
-                ))}
-            </div>
-          </div>
-        )}
+      <nav className="grid grid-cols-1 gap-4 md:grid-cols-2" aria-label="Et maintenant ?">
+        <Link href="/game" className="btn btn-primary btn-lg">
+          <RotateCcw className="h-6 w-6" strokeWidth={2.75} aria-hidden />
+          Rejouer
+        </Link>
+        <Link href="/" className="btn btn-lg">
+          <Home className="h-6 w-6" strokeWidth={2.75} aria-hidden />
+          Accueil
+        </Link>
+      </nav>
 
-        {/* Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-          <Link href="/game">
-            <button className="w-full bg-linear-to-r/srgb from-green-400 to-blue-500 hover:from-green-500 hover:to-blue-600 text-white font-bold py-4 px-6 rounded-xl transition-all duration-300 transform hover:scale-105 flex items-center justify-center space-x-2">
-              <RotateCcw className="h-6 w-6" />
-              <span>Rejouer</span>
-            </button>
-          </Link>
-
-          <Link href="/">
-            <button className="w-full bg-white/10 hover:bg-white/20 backdrop-blur-xs text-white font-semibold py-4 px-6 rounded-xl transition-all duration-300 transform hover:scale-105 flex items-center justify-center space-x-2">
-              <Home className="h-6 w-6" />
-              <span>Accueil</span>
-            </button>
-          </Link>
-        </div>
-
-        {/* Session Info */}
-        <div className="text-center text-white/60 text-sm">
-          <p>Session du {new Date(session.date).toLocaleDateString('fr-FR', {
+      <footer className="text-center text-sm text-ink-soft">
+        <p>
+          Session du{' '}
+          {new Date(session.date).toLocaleDateString('fr-FR', {
             weekday: 'long',
             year: 'numeric',
             month: 'long',
             day: 'numeric',
             hour: '2-digit',
-            minute: '2-digit'
-          })}</p>
-          {session.duration && (
-            <p>Durée: {GameEngine.formatTime(session.duration)}</p>
-          )}
-        </div>
-      </div>
+            minute: '2-digit',
+          })}
+        </p>
+        {session.duration ? <p>Durée : {GameEngine.formatTime(session.duration)}</p> : null}
+      </footer>
     </div>
   )
 }
 
 export default function ResultsPage() {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-4 border-white border-t-transparent"></div>
-      </div>
-    }>
+    <Suspense fallback={<PageLoader />}>
       <ResultsContent />
     </Suspense>
   )

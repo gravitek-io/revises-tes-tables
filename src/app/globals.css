@@ -1,235 +1,300 @@
 /*
   Global stylesheet: Tailwind CSS v4 (CSS-first configuration, no
-  tailwind.config.ts) plus the app's own base styles and animations.
-  Gradients are written `bg-linear-to-r/srgb` to keep the v3 sRGB interpolation
-  (v4 defaults to OKLab, which shifts the midtones of the green-to-blue buttons).
+  tailwind.config.ts) plus the app's visual identity, « le cahier de l'école »:
+  a French Seyès-ruled notebook page, blue fountain-pen ink, one colored sticker
+  (gommette) per multiplication table, and the teacher's red pen and stamps.
+
+  Contrast rule: text is always dark ink on an opaque light surface (or the
+  reverse), never light text on a translucent layer. Every pair below is
+  checked against WCAG AA (4.5:1 for body text).
 */
 @import 'tailwindcss';
 
 /*
   Design tokens. Each variable generates the matching utilities, e.g.
-  --color-primary-500 -> bg-primary-500, --animate-bounce-slow -> animate-bounce-slow.
+  --color-ink -> text-ink / bg-ink / border-ink, --font-display -> font-display.
+  The default Tailwind palette stays available but the app only uses these.
 */
 @theme {
-  --color-primary-50: #f0f9ff;
-  --color-primary-100: #e0f2fe;
-  --color-primary-200: #bae6fd;
-  --color-primary-300: #7dd3fc;
-  --color-primary-400: #38bdf8;
-  --color-primary-500: #0ea5e9;
-  --color-primary-600: #0284c7;
-  --color-primary-700: #0369a1;
-  --color-primary-800: #075985;
-  --color-primary-900: #0c4a6e;
+  /* Paper and ruling (Seyès: thin lines every 8px, strong lines every 32px). */
+  --color-paper: #ffffff;
+  --color-rule: #e3ebf8;
+  --color-rule-strong: #c3d3f0;
+  --color-margin: #f4a0a8;
 
-  --color-secondary-50: #fdf4ff;
-  --color-secondary-100: #fae8ff;
-  --color-secondary-200: #f5d0fe;
-  --color-secondary-300: #f0abfc;
-  --color-secondary-400: #e879f9;
-  --color-secondary-500: #d946ef;
-  --color-secondary-600: #c026d3;
-  --color-secondary-700: #a21caf;
-  --color-secondary-800: #86198f;
-  --color-secondary-900: #701a75;
+  /* Ink: body text 13.9:1 and secondary text 7.1:1 on paper. */
+  --color-ink: #1c2566;
+  --color-ink-soft: #4a5490;
 
-  --color-success-50: #f0fdf4;
-  --color-success-100: #dcfce7;
-  --color-success-200: #bbf7d0;
-  --color-success-300: #86efac;
-  --color-success-400: #4ade80;
-  --color-success-500: #22c55e;
-  --color-success-600: #16a34a;
-  --color-success-700: #15803d;
-  --color-success-800: #166534;
-  --color-success-900: #14532d;
+  /* Teacher's red pen (corrections, errors): 5.2:1 on paper. */
+  --color-pen: #d1253b;
+  --color-pen-soft: #fde8eb;
 
-  --color-warning-50: #fffbeb;
-  --color-warning-100: #fef3c7;
-  --color-warning-200: #fde68a;
-  --color-warning-300: #fcd34d;
-  --color-warning-400: #fbbf24;
-  --color-warning-500: #f59e0b;
-  --color-warning-600: #d97706;
-  --color-warning-700: #b45309;
-  --color-warning-800: #92400e;
-  --color-warning-900: #78350f;
+  /* Right answers and the « Bravo ! » stamp: 5.1:1 on paper. */
+  --color-success: #0e7f49;
+  --color-success-soft: #e1f4e9;
 
-  --color-error-50: #fef2f2;
-  --color-error-100: #fee2e2;
-  --color-error-200: #fecaca;
-  --color-error-300: #fca5a5;
-  --color-error-400: #f87171;
-  --color-error-500: #ef4444;
-  --color-error-600: #dc2626;
-  --color-error-700: #b91c1c;
-  --color-error-800: #991b1b;
-  --color-error-900: #7f1d1d;
+  /* Highlighter yellow: primary actions, ink text on it is 9.4:1. */
+  --color-highlight: #ffce3a;
+  --color-highlight-soft: #fff3c4;
+
+  /* Streak chip background. */
+  --color-flame: #ffe3cc;
 
   /*
-    Tailwind v3 (sRGB hex) values for the default hues the app uses. v4 ships an
-    OKLCH palette that renders visibly more saturated (e.g. green-400 in the
-    main call-to-action); pinning the v3 values keeps the look unchanged.
+    One sticker color per table (1 to 10). Ink text on each is at least 5.4:1.
+    Used through TableSticker (src/components/TableSticker.tsx).
   */
-  --color-gray-50: #f9fafb;
-  --color-gray-100: #f3f4f6;
-  --color-gray-200: #e5e7eb;
-  --color-gray-300: #d1d5db;
-  --color-gray-400: #9ca3af;
-  --color-gray-500: #6b7280;
-  --color-gray-600: #4b5563;
-  --color-gray-700: #374151;
-  --color-gray-800: #1f2937;
-  --color-gray-900: #111827;
-  --color-gray-950: #030712;
+  --color-table-1: #ff7a6b;
+  --color-table-2: #ff9f1c;
+  --color-table-3: #ffce3a;
+  --color-table-4: #8ad03f;
+  --color-table-5: #2cc4b0;
+  --color-table-6: #4fb0f5;
+  --color-table-7: #8e9bff;
+  --color-table-8: #bc8cf2;
+  --color-table-9: #f57dba;
+  --color-table-10: #de9a62;
 
-  --color-red-50: #fef2f2;
-  --color-red-100: #fee2e2;
-  --color-red-200: #fecaca;
-  --color-red-300: #fca5a5;
-  --color-red-400: #f87171;
-  --color-red-500: #ef4444;
-  --color-red-600: #dc2626;
-  --color-red-700: #b91c1c;
-  --color-red-800: #991b1b;
-  --color-red-900: #7f1d1d;
-  --color-red-950: #450a0a;
+  /* Keyboard focus ring, visible on paper and on every sticker color. */
+  --color-focus: #1f6feb;
 
-  --color-orange-50: #fff7ed;
-  --color-orange-100: #ffedd5;
-  --color-orange-200: #fed7aa;
-  --color-orange-300: #fdba74;
-  --color-orange-400: #fb923c;
-  --color-orange-500: #f97316;
-  --color-orange-600: #ea580c;
-  --color-orange-700: #c2410c;
-  --color-orange-800: #9a3412;
-  --color-orange-900: #7c2d12;
-  --color-orange-950: #431407;
+  /*
+    Typefaces (loaded by next/font in layout.tsx):
+    - display: Grandstander, a rounded face drawn for children, for titles,
+      numbers and buttons;
+    - sans: Andika, designed by SIL for beginning readers (unambiguous a, l, 1);
+    - hand: Playwrite FR Moderne, the cursive taught in French schools, used
+      only for the teacher's annotations.
+  */
+  --font-display: var(--font-grandstander), ui-rounded, system-ui, sans-serif;
+  --font-sans: var(--font-andika), system-ui, sans-serif;
+  --font-hand: var(--font-playwrite), cursive;
 
-  --color-yellow-50: #fefce8;
-  --color-yellow-100: #fef9c3;
-  --color-yellow-200: #fef08a;
-  --color-yellow-300: #fde047;
-  --color-yellow-400: #facc15;
-  --color-yellow-500: #eab308;
-  --color-yellow-600: #ca8a04;
-  --color-yellow-700: #a16207;
-  --color-yellow-800: #854d0e;
-  --color-yellow-900: #713f12;
-  --color-yellow-950: #422006;
-
-  --color-green-50: #f0fdf4;
-  --color-green-100: #dcfce7;
-  --color-green-200: #bbf7d0;
-  --color-green-300: #86efac;
-  --color-green-400: #4ade80;
-  --color-green-500: #22c55e;
-  --color-green-600: #16a34a;
-  --color-green-700: #15803d;
-  --color-green-800: #166534;
-  --color-green-900: #14532d;
-  --color-green-950: #052e16;
-
-  --color-blue-50: #eff6ff;
-  --color-blue-100: #dbeafe;
-  --color-blue-200: #bfdbfe;
-  --color-blue-300: #93c5fd;
-  --color-blue-400: #60a5fa;
-  --color-blue-500: #3b82f6;
-  --color-blue-600: #2563eb;
-  --color-blue-700: #1d4ed8;
-  --color-blue-800: #1e40af;
-  --color-blue-900: #1e3a8a;
-  --color-blue-950: #172554;
-
-  --color-purple-50: #faf5ff;
-  --color-purple-100: #f3e8ff;
-  --color-purple-200: #e9d5ff;
-  --color-purple-300: #d8b4fe;
-  --color-purple-400: #c084fc;
-  --color-purple-500: #a855f7;
-  --color-purple-600: #9333ea;
-  --color-purple-700: #7e22ce;
-  --color-purple-800: #6b21a8;
-  --color-purple-900: #581c87;
-  --color-purple-950: #3b0764;
-
-  --color-pink-50: #fdf2f8;
-  --color-pink-100: #fce7f3;
-  --color-pink-200: #fbcfe8;
-  --color-pink-300: #f9a8d4;
-  --color-pink-400: #f472b6;
-  --color-pink-500: #ec4899;
-  --color-pink-600: #db2777;
-  --color-pink-700: #be185d;
-  --color-pink-800: #9d174d;
-  --color-pink-900: #831843;
-  --color-pink-950: #500724;
-
-  --font-sans: var(--font-inter), system-ui, sans-serif;
-
-  --animate-bounce-slow: bounce 2s infinite;
-  --animate-pulse-slow: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  --animate-stamp: stamp 0.45s cubic-bezier(0.2, 1.6, 0.4, 1) both;
+  --animate-pop: pop 0.35s cubic-bezier(0.2, 1.6, 0.4, 1) both;
+  --animate-shake: shake 0.4s ease-in-out both;
+  --animate-draw: draw 0.7s 0.15s ease-out both;
+  --animate-strike: strike 0.3s ease-out both;
 }
 
-/*
-  Tailwind v4 preflight gives buttons `cursor: default` (v3 used `pointer`).
-  Keep the pointer so children see that buttons are clickable.
-*/
+@keyframes stamp {
+  0% { opacity: 0; transform: rotate(var(--stamp-rotate, -12deg)) scale(2.2); }
+  100% { opacity: 1; transform: rotate(var(--stamp-rotate, -12deg)) scale(1); }
+}
+
+@keyframes pop {
+  0% { transform: scale(0.7); }
+  60% { transform: scale(1.12); }
+  100% { transform: scale(1); }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-6px); }
+  40%, 80% { transform: translateX(6px); }
+}
+
+/* Draws an SVG path whose pathLength is 1 (the red circle around a grade). */
+@keyframes draw {
+  from { stroke-dashoffset: 1; }
+  to { stroke-dashoffset: 0; }
+}
+
+/* Red-pen line crossing out a wrong answer, drawn left to right. */
+@keyframes strike {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
 @layer base {
+  /*
+    The whole page is a notebook sheet: red margin line, strong and thin
+    horizontal rules, thin vertical rules. The margin sits further right on
+    wider screens; <main> pads its content past it.
+  */
+  body {
+    --margin-x: 1.5rem;
+    min-height: 100vh;
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    background-color: var(--color-paper);
+    background-image:
+      linear-gradient(90deg, transparent var(--margin-x), var(--color-margin) var(--margin-x), var(--color-margin) calc(var(--margin-x) + 2px), transparent calc(var(--margin-x) + 2px)),
+      linear-gradient(var(--color-rule-strong) 1px, transparent 1px),
+      linear-gradient(var(--color-rule) 1px, transparent 1px),
+      linear-gradient(90deg, var(--color-rule) 1px, transparent 1px);
+    background-size: 100% 100%, 100% 32px, 100% 8px, 32px 32px;
+  }
+
+  @media (min-width: 48rem) {
+    body {
+      --margin-x: 4rem;
+    }
+  }
+
+  /*
+    Tailwind v4 preflight gives buttons `cursor: default` (v3 used `pointer`).
+    Keep the pointer so children see that buttons are clickable.
+  */
   button:not(:disabled),
   [role='button']:not(:disabled) {
     cursor: pointer;
   }
-}
 
-body {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  min-height: 100vh;
-}
-
-/* Animations pour les enfants */
-.wiggle {
-  animation: wiggle 0.5s ease-in-out;
-}
-
-@keyframes wiggle {
-  0%, 100% { transform: rotate(0deg); }
-  25% { transform: rotate(-3deg); }
-  75% { transform: rotate(3deg); }
-}
-
-.bounce-in {
-  animation: bounceIn 0.6s ease-out;
-}
-
-@keyframes bounceIn {
-  0% {
-    opacity: 0;
-    transform: scale(0.3);
+  :focus-visible {
+    outline: 4px solid var(--color-focus);
+    outline-offset: 3px;
   }
-  50% {
-    opacity: 1;
-    transform: scale(1.1);
-  }
-  100% {
-    opacity: 1;
-    transform: scale(1);
+
+  /* Children (and some parents) are sensitive to motion: honour the setting. */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    ::before,
+    ::after {
+      animation-duration: 0.01ms !important;
+      animation-delay: 0ms !important;
+      transition-duration: 0.01ms !important;
+    }
   }
 }
 
-.slide-up {
-  animation: slideUp 0.4s ease-out;
+/*
+  Reusable component classes. Plain classes (not React components) so that the
+  same look applies to a <button> and a <Link> without nesting one in the other.
+  Declared in the components layer: utilities in JSX can still override them.
+*/
+@layer components {
+  /* Chunky "key" button: ink outline and a solid ink base it presses into. */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-height: 3.5rem;
+    padding: 0.75rem 1.25rem;
+    border: 3px solid var(--color-ink);
+    border-radius: 1.125rem;
+    box-shadow: 0 5px 0 var(--color-ink);
+    background: var(--color-paper);
+    color: var(--color-ink);
+    font-family: var(--font-display);
+    font-size: 1.125rem;
+    font-weight: 800;
+    line-height: 1.2;
+    text-align: center;
+    text-decoration: none;
+    transition: transform 0.12s ease, box-shadow 0.12s ease;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  @media (hover: hover) {
+    .btn:not(:disabled):hover {
+      transform: translateY(-2px);
+      box-shadow: 0 7px 0 var(--color-ink);
+    }
+  }
+
+  .btn:not(:disabled):active {
+    transform: translateY(4px);
+    box-shadow: 0 1px 0 var(--color-ink);
+  }
+
+  .btn:disabled {
+    border-color: var(--color-ink-soft);
+    box-shadow: 0 5px 0 var(--color-ink-soft);
+    background: var(--color-rule);
+    color: var(--color-ink-soft);
+    cursor: not-allowed;
+  }
+
+  .btn-primary {
+    background: var(--color-highlight);
+  }
+
+  .btn-danger {
+    border-color: var(--color-pen);
+    box-shadow: 0 5px 0 var(--color-pen);
+    color: var(--color-pen);
+  }
+
+  @media (hover: hover) {
+    .btn-danger:not(:disabled):hover {
+      box-shadow: 0 7px 0 var(--color-pen);
+    }
+  }
+
+  .btn-danger:not(:disabled):active {
+    box-shadow: 0 1px 0 var(--color-pen);
+  }
+
+  .btn-lg {
+    min-height: 4.5rem;
+    padding: 1rem 1.5rem;
+    font-size: 1.5rem;
+    border-radius: 1.375rem;
+  }
+
+  /* Square icon-only button (back arrow). Needs an aria-label. */
+  .btn-icon {
+    min-width: 3rem;
+    min-height: 3rem;
+    padding: 0.5rem;
+  }
+
+  /* Page content area: starts just right of the notebook's red margin line. */
+  .page {
+    width: 100%;
+    min-height: 100vh;
+    padding: 1.5rem 1rem 2.5rem calc(var(--margin-x) + 1rem);
+  }
+
+  @media (min-width: 48rem) {
+    .page {
+      padding-right: calc(var(--margin-x) + 1rem);
+    }
+  }
+
+  /* A sheet of paper laid on the notebook: opaque, so text keeps its contrast. */
+  .card {
+    position: relative;
+    background: var(--color-paper);
+    border: 3px solid var(--color-ink);
+    border-radius: 1.375rem;
+  }
+
+  /* Small rounded label: question counter, streak. */
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    min-height: 2.5rem;
+    padding: 0.25rem 0.875rem;
+    border: 2px solid var(--color-ink);
+    border-radius: 999px;
+    background: var(--color-paper);
+    font-family: var(--font-display);
+    font-weight: 800;
+  }
 }
 
-@keyframes slideUp {
-  0% {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0);
-  }
+/*
+  react-toastify, restyled as a note pinned on the notebook (light theme).
+  Only the settings page still uses toasts; the game gives its feedback on the
+  question card itself.
+*/
+:root {
+  --toastify-font-family: var(--font-sans);
+  --toastify-text-color-light: var(--color-ink);
+  --toastify-toast-bd-radius: 1.125rem;
+  --toastify-toast-shadow: 0 5px 0 var(--color-ink);
+  --toastify-color-success: var(--color-success);
+  --toastify-color-error: var(--color-pen);
+  --toastify-color-info: var(--color-ink);
+  --toastify-color-progress-light: var(--color-highlight);
+}
+
+.Toastify__toast {
+  border: 3px solid var(--color-ink);
+  font-weight: 700;
 }
