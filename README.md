@@ -7,13 +7,13 @@ Une application web interactive pour aider les enfants à réviser leurs tables 
 - **Configuration personnalisable** : Choix du nombre de questions (5-30) et des tables à réviser (1-10)
 - **Jeu interactif** : Questions aléatoires avec feedback en temps réel et système de streak
 - **Suivi des progrès** : Statistiques détaillées et historique des sessions
-- **Interface ludique** : Design coloré avec animations et messages d'encouragement
+- **Interface ludique** : Identité « cahier de l'école » (gommettes, tampons, corrections au stylo rouge) et messages d'encouragement
 - **Stockage local** : Sauvegarde automatique des paramètres et sessions
 - **Responsive** : Optimisé pour ordinateurs, tablettes et mobiles
 
 ## 🚀 Technologies
 
-- **Next.js 14** - Framework React avec App Router
+- **Next.js 16** - Framework React avec App Router (export statique)
 - **TypeScript** - Typage statique pour la sécurité du code
 - **Tailwind CSS v4** - Framework CSS utilitaire (configuration CSS-first dans `src/app/globals.css`)
 - **Lucide React** - Icônes modernes
@@ -21,10 +21,10 @@ Une application web interactive pour aider les enfants à réviser leurs tables 
 
 ## 🎮 Comment utiliser l'application
 
-1. **Configuration** : Sélectionnez le nombre de questions et les tables à réviser
+1. **Réglages** : Sélectionnez le nombre de questions et les tables à réviser
 2. **Jeu** : Répondez aux questions de multiplication qui s'affichent
 3. **Résultats** : Consultez vos performances et encouragements personnalisés
-4. **Statistiques** : Suivez vos progrès dans le temps
+4. **Mes progrès** : Suivez vos progrès dans le temps
 
 ## 📦 Installation
 
@@ -49,23 +49,25 @@ npm start
 - **Apprentissage adaptatif** : Identification des tables les plus difficiles
 - **Messages d'encouragement** : Feedback positif basé sur les performances
 - **Suivi des progrès** : Visualisation des améliorations dans le temps
-- **Interface enfant** : Design attractif avec couleurs modernes et animations
+- **Interface enfant** : Textes très contrastés, polices conçues pour les jeunes lecteurs, gros boutons pensés pour le téléphone
 
 ## 📱 Pages de l'application
 
 - **Accueil** (`/`) - Page principale avec aperçu des statistiques
-- **Configuration** (`/config`) - Paramétrage du jeu
+- **Réglages** (`/config`) - Nombre de questions et tables à réviser
 - **Jeu** (`/game`) - Interface de révision interactive
 - **Résultats** (`/results`) - Analyse des performances après chaque session
-- **Statistiques** (`/stats`) - Historique détaillé et tendances
+- **Mes progrès** (`/stats`) - Historique détaillé, tendances et bons points
 
 ## 🎨 Design
 
-L'application utilise un design moderne avec :
-- Dégradés colorés attractifs pour les enfants
-- Animations ludiques (bounce, wiggle, slide)
-- Interface responsive pour tous les écrans
-- Typographie claire et lisible
+Identité visuelle « le cahier de l'école », pensée d'abord pour le téléphone :
+- Fond papier Seyès, encre bleue, une gommette de couleur par table
+- Tampon « Bravo ! » sur une bonne réponse, correction au stylo rouge sur une erreur, note entourée sur les résultats
+- Polices : Grandstander (titres, chiffres), Andika (texte, conçue pour les lecteurs débutants), Playwrite FR Moderne (annotations de la maîtresse)
+- Contraste WCAG AA partout (texte foncé sur fond opaque), animations désactivées si l'appareil demande moins de mouvement
+
+Les jetons de design (couleurs, polices, animations) sont dans `src/app/globals.css`.
 
 ## 💾 Stockage des données
 

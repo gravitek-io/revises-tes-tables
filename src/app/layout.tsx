@@ -1,11 +1,30 @@
 import "react-toastify/dist/ReactToastify.css";
 import "./globals.css";
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Andika, Grandstander, Playwrite_FR_Moderne } from "next/font/google";
 import { ToastContainer } from "react-toastify";
 import Script from "next/script";
 
-const inter = Inter({ subsets: ["latin"] });
+/*
+  Typefaces, self-hosted at build time by next/font and exposed as CSS
+  variables that globals.css maps to font-display / font-sans / font-hand.
+*/
+const grandstander = Grandstander({
+  subsets: ["latin"],
+  variable: "--font-grandstander",
+  display: "swap",
+});
+const andika = Andika({
+  subsets: ["latin"],
+  weight: ["400", "700"],
+  variable: "--font-andika",
+  display: "swap",
+});
+// Playwrite has no subset split, so next/font does not preload it.
+const playwrite = Playwrite_FR_Moderne({
+  variable: "--font-playwrite",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://revises-tes-tables.gravitek.io"),
@@ -65,8 +84,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="fr">
-      <body className={inter.className}>
+    <html
+      lang="fr"
+      className={`${grandstander.variable} ${andika.variable} ${playwrite.variable}`}
+    >
+      <body>
         <Script
           async
           src="https://www.googletagmanager.com/gtag/js?id=G-NE650PZHBC"
@@ -84,9 +106,9 @@ export default function RootLayout({
           }}
         />
 
-        <main className="min-h-screen">{children}</main>
+        <main className="page">{children}</main>
         <ToastContainer
-          position="top-right"
+          position="top-center"
           autoClose={3000}
           hideProgressBar={false}
           newestOnTop={false}
@@ -95,8 +117,7 @@ export default function RootLayout({
           pauseOnFocusLoss
           draggable
           pauseOnHover
-          theme="colored"
-          className="mt-16"
+          theme="light"
         />
       </body>
     </html>

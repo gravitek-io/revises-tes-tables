@@ -2,20 +2,23 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import {
-  ArrowLeft,
-  Save,
-  RotateCcw,
-  Trash2,
-  Settings as SettingsIcon,
-} from "lucide-react";
+import { Save, RotateCcw, Trash2, Check } from "lucide-react";
 import { toast } from "react-toastify";
 import { GameStorage } from "@/lib/storage";
+import { describeTables, pluralize } from "@/lib/format";
 import { GameSettings } from "@/types";
+import PageHeader from "@/components/PageHeader";
+import PageLoader from "@/components/PageLoader";
+import { tableColor } from "@/components/TableSticker";
 
 const AVAILABLE_TABLES = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 const QUESTION_OPTIONS = [5, 10, 15, 20, 25, 30];
 
+/**
+ * Settings page (« Réglages »): number of questions per session and the
+ * tables to practise. Changes are kept in the page until the child presses
+ * « Enregistrer », which writes them to localStorage.
+ */
 export default function ConfigPage() {
   const [settings, setSettings] = useState<GameSettings>({
     numberOfQuestions: 10,
@@ -58,7 +61,7 @@ export default function ConfigPage() {
   const handleSave = () => {
     GameStorage.saveSettings(settings);
     setHasChanges(false);
-    toast.success("✅ Configuration sauvegardée !");
+    toast.success("Réglages enregistrés !");
   };
 
   const handleReset = () => {
@@ -68,17 +71,17 @@ export default function ConfigPage() {
     };
     setSettings(defaultSettings);
     setHasChanges(true);
-    toast.info("Configuration réinitialisée");
+    toast.info("Réglages réinitialisés : pense à enregistrer.");
   };
 
   const handleClearHistory = () => {
     if (
       window.confirm(
-        "Es-tu sûr de vouloir effacer tout l&apos;historique ? Cette action est irréversible."
+        "Es-tu sûr de vouloir effacer tout l'historique ? Cette action est irréversible."
       )
     ) {
       GameStorage.clearAllData();
-      toast.success("🗑️ Historique effacé !");
+      toast.success("Historique effacé !");
       // Reload settings after clearing
       const newSettings = GameStorage.getSettings();
       setSettings(newSettings);
@@ -87,140 +90,129 @@ export default function ConfigPage() {
   };
 
   if (!isLoaded) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-4 border-white border-t-transparent"></div>
-      </div>
-    );
+    return <PageLoader />;
   }
 
+  const selectedCount = settings.selectedTables.length;
+
   return (
-    <div className="min-h-screen p-4">
-      <div className="max-w-4xl mx-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center space-x-4">
-            <Link href="/">
-              <button className="p-2 bg-white/10 hover:bg-white/20 backdrop-blur-xs rounded-xl text-white transition-all duration-300 transform hover:scale-105">
-                <ArrowLeft className="h-6 w-6" />
-              </button>
-            </Link>
-            <div className="flex items-center space-x-3">
-              <SettingsIcon className="h-8 w-8 text-white" />
-              <h1 className="text-3xl font-bold text-white">Configuration</h1>
-            </div>
-          </div>
+    <div className="mx-auto w-full max-w-3xl pb-28">
+      <PageHeader title="Réglages" />
 
-          {hasChanges && (
-            <button
-              onClick={handleSave}
-              className="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-6 rounded-xl transition-all duration-300 transform hover:scale-105 flex items-center space-x-2"
-            >
-              <Save className="h-5 w-5" />
-              <span>Sauvegarder</span>
-            </button>
-          )}
-        </div>
-
-        <div className="space-y-8">
-          {/* Number of Questions */}
-          <div className="bg-white/10 backdrop-blur-xs rounded-2xl p-6 slide-up">
-            <h2 className="text-xl font-semibold text-white mb-4">
-              Nombre de questions par session
-            </h2>
-            <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
-              {QUESTION_OPTIONS.map((count) => (
+      <div className="flex flex-col gap-6">
+        <section className="card p-5 md:p-6" aria-labelledby="question-count">
+          <h2 id="question-count" className="mb-4 font-display text-xl font-extrabold">
+            Nombre de questions par session
+          </h2>
+          <div className="grid grid-cols-3 gap-3 md:grid-cols-6" role="radiogroup" aria-labelledby="question-count">
+            {QUESTION_OPTIONS.map((count) => {
+              const isSelected = settings.numberOfQuestions === count;
+              return (
                 <button
                   key={count}
+                  type="button"
+                  role="radio"
+                  aria-checked={isSelected}
                   onClick={() => handleQuestionCountChange(count)}
-                  className={`py-3 px-4 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 ${
-                    settings.numberOfQuestions === count
-                      ? "bg-blue-500 text-white shadow-lg"
-                      : "bg-white/10 hover:bg-white/20 text-white/80"
-                  }`}
+                  className={`btn text-xl ${isSelected ? "btn-primary" : ""}`}
                 >
                   {count}
                 </button>
-              ))}
-            </div>
+              );
+            })}
           </div>
+        </section>
 
-          {/* Tables Selection */}
-          <div className="bg-white/10 backdrop-blur-xs rounded-2xl p-6 bounce-in">
-            <h2 className="text-xl font-semibold text-white mb-4">
-              Tables à réviser
-              <span className="text-white/70 text-sm ml-2">
-                ({settings.selectedTables.length} sélectionnée
-                {settings.selectedTables.length > 1 ? "s" : ""})
-              </span>
-            </h2>
-            <div className="grid grid-cols-3 md:grid-cols-6 lg:grid-cols-11 gap-3">
-              {AVAILABLE_TABLES.map((table) => (
+        <section className="card p-5 md:p-6" aria-labelledby="tables">
+          <h2 id="tables" className="font-display text-xl font-extrabold">
+            Tables à réviser
+          </h2>
+          <p className="mb-5 text-ink-soft" aria-live="polite">
+            {selectedCount} {selectedCount > 1 ? "tables sélectionnées" : "table sélectionnée"}
+          </p>
+          {/* Each table is a sticker: colored and ticked when selected, a dashed outline otherwise. */}
+          <div className="grid grid-cols-5 justify-items-center gap-x-2 gap-y-4">
+            {AVAILABLE_TABLES.map((table) => {
+              const isSelected = settings.selectedTables.includes(table);
+              return (
                 <button
                   key={table}
+                  type="button"
+                  aria-pressed={isSelected}
+                  aria-label={`Table de ${table}`}
                   onClick={() => handleTableToggle(table)}
-                  className={`py-4 px-3 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 ${
-                    settings.selectedTables.includes(table)
-                      ? "bg-linear-to-r/srgb from-purple-500 to-pink-500 text-white shadow-lg wiggle"
-                      : "bg-white/10 hover:bg-white/20 text-white/80"
+                  style={isSelected ? { backgroundColor: tableColor(table) } : undefined}
+                  className={`relative grid h-14 w-14 place-items-center rounded-full font-display text-xl font-black transition-transform md:h-16 md:w-16 md:text-2xl ${
+                    isSelected
+                      ? "animate-pop text-ink shadow-[inset_0_-4px_0_rgb(0_0_0/0.14)]"
+                      : "border-[3px] border-dashed border-ink-soft bg-paper text-ink-soft"
                   }`}
                 >
-                  ×{table}
+                  {table}
+                  {isSelected && (
+                    <span
+                      className="absolute -top-1 -right-1 grid h-6 w-6 place-items-center rounded-full border-2 border-paper bg-ink text-paper"
+                      aria-hidden
+                    >
+                      <Check className="h-3.5 w-3.5" strokeWidth={4} />
+                    </span>
+                  )}
                 </button>
-              ))}
-            </div>
+              );
+            })}
           </div>
+        </section>
 
-          {/* Preview */}
-          <div className="bg-linear-to-r/srgb from-green-400/20 to-blue-500/20 backdrop-blur-xs rounded-2xl p-6 slide-up">
-            <h2 className="text-xl font-semibold text-white mb-4">
-              Aperçu de ta session
-            </h2>
-            <div className="text-white/80 space-y-2">
-              <p>
-                <span className="font-semibold">Nombre de questions :</span>{" "}
-                {settings.numberOfQuestions}
-              </p>
-              <p>
-                <span className="font-semibold">Tables sélectionnées :</span>{" "}
-                {settings.selectedTables.join(" × ")}
-              </p>
-              <p className="text-sm text-white/60">
-                Les questions seront mélangées aléatoirement entre toutes les
-                tables sélectionnées.
-              </p>
-            </div>
-          </div>
+        <section className="rounded-[1.375rem] border-[3px] border-dashed border-ink-soft bg-paper p-5 md:p-6" aria-labelledby="preview">
+          <h2 id="preview" className="mb-2 font-display text-xl font-extrabold">
+            Aperçu de ta session
+          </h2>
+          <p className="text-lg">
+            {pluralize(settings.numberOfQuestions, "question", "questions")} sur{" "}
+            {describeTables(settings.selectedTables)}.
+          </p>
+          <p className="mt-1 text-ink-soft">
+            Les questions sont mélangées au hasard entre toutes les tables choisies.
+          </p>
+        </section>
 
-          {/* Actions */}
-          <div className="flex flex-col md:flex-row gap-4">
+        <div className="grid gap-4 md:grid-cols-2">
+          <button type="button" onClick={handleReset} className="btn">
+            <RotateCcw className="h-5 w-5" strokeWidth={2.5} aria-hidden />
+            Réinitialiser
+          </button>
+          <button type="button" onClick={handleClearHistory} className="btn btn-danger">
+            <Trash2 className="h-5 w-5" strokeWidth={2.5} aria-hidden />
+            Effacer l&apos;historique
+          </button>
+        </div>
+
+        <Link
+          href="/"
+          className="mx-auto font-bold underline decoration-2 underline-offset-4 hover:text-pen"
+        >
+          Retour à l&apos;accueil
+        </Link>
+      </div>
+
+      {/* Save bar: appears only with unsaved changes, always within thumb reach. */}
+      {hasChanges && (
+        <div className="fixed inset-x-0 bottom-0 z-10 border-t-[3px] border-ink bg-paper/95 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+          <div className="mx-auto flex max-w-3xl items-center justify-between gap-4">
+            <p className="hidden font-bold text-ink-soft sm:block">
+              Tes réglages ne sont pas encore enregistrés.
+            </p>
             <button
-              onClick={handleReset}
-              className="flex-1 bg-yellow-500 hover:bg-yellow-600 text-white font-semibold py-4 px-6 rounded-xl transition-all duration-300 transform hover:scale-105 flex items-center justify-center space-x-2"
+              type="button"
+              onClick={handleSave}
+              className="btn btn-primary w-full animate-pop sm:w-auto"
             >
-              <RotateCcw className="h-5 w-5" />
-              <span>Réinitialiser</span>
+              <Save className="h-5 w-5" strokeWidth={2.5} aria-hidden />
+              Enregistrer
             </button>
-
-            <button
-              onClick={handleClearHistory}
-              className="flex-1 bg-red-500 hover:bg-red-600 text-white font-semibold py-4 px-6 rounded-xl transition-all duration-300 transform hover:scale-105 flex items-center justify-center space-x-2"
-            >
-              <Trash2 className="h-5 w-5" />
-              <span>Effacer l&apos;historique</span>
-            </button>
-          </div>
-
-          {/* Back to Home */}
-          <div className="text-center">
-            <Link href="/">
-              <button className="bg-white/10 hover:bg-white/20 backdrop-blur-xs text-white font-semibold py-3 px-8 rounded-xl transition-all duration-300 transform hover:scale-105">
-                Retour à l&apos;accueil
-              </button>
-            </Link>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

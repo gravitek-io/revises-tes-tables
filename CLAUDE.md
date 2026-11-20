@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Application Overview
 
-This is a French-language educational web application designed to help children practice multiplication tables in an engaging way. The app is built with Next.js 14 and uses local storage for persistence, requiring no authentication or backend services.
+This is a French-language educational web application designed to help children practice multiplication tables in an engaging way. The app is built with Next.js 16 and uses local storage for persistence, requiring no authentication or backend services.
 
 ## Development Commands
 
@@ -39,10 +39,10 @@ The application follows a client-side only architecture with local storage persi
 ### Page Structure
 
 - `/` - Home page with session overview and quick stats
-- `/config` - Game configuration (questions count, table selection)
+- `/config` - Settings, « Réglages » (questions count, table selection)
 - `/game` - Interactive gameplay with real-time feedback
 - `/results` - Post-session analysis and encouragement (uses Suspense for useSearchParams)
-- `/stats` - Historical performance tracking
+- `/stats` - Progress, « Mes progrès » (history, trend, bons points)
 
 ## Critical Implementation Details
 
@@ -68,27 +68,40 @@ Messages adapt based on performance percentage and identify weakest tables for t
 
 ## Styling Approach
 
-Uses Tailwind CSS v4 with child-friendly design patterns:
-- Gradient backgrounds and colorful UI elements
-- Custom animations (bounce-in, wiggle, slide-up) defined in globals.css
-- Responsive design optimized for both desktop and mobile
-- Toast notifications for user feedback
+Visual identity « le cahier de l'école » (redesign of 2026-11), mobile first (children
+often play on a parent's phone):
+- The page is a French Seyès notebook sheet (rules + red margin, drawn on `body` in
+  `globals.css`); `<main className="page">` pads content past the margin line.
+- Ink-blue text on opaque white paper. No translucent glass cards, no light text on
+  translucent layers: every text/background pair meets WCAG AA (ratios noted next
+  to each token in `@theme`).
+- One sticker color per table (`--color-table-1` to `-10`), rendered by
+  `src/components/TableSticker.tsx`. Ink text on every sticker color is ≥ 5.4:1.
+- Feedback is the teacher's: `Stamp` (« Bravo ! », performance level), red-pen
+  correction of wrong answers, `GradeCircle` (grade circled in red on results).
+- Fonts via `next/font` in `layout.tsx`: Grandstander (`font-display`: titles, numbers,
+  buttons), Andika (`font-sans`: body, designed for beginning readers), Playwrite FR
+  Moderne (`font-hand`: teacher annotations only).
+- Icons are lucide-react, never emoji, so they share the ink stroke.
+- Component classes in `@layer components`: `.btn` (+ `.btn-primary`, `.btn-danger`,
+  `.btn-lg`, `.btn-icon`), `.card`, `.chip`, `.page`. Apply `.btn` directly to a
+  `<Link>` or `<button>`; never nest a button inside a link.
+- Animations (`animate-stamp`, `-pop`, `-shake`, `-draw`, `-strike`) answer the
+  child's action; `prefers-reduced-motion` disables them all.
+- French typography: non-breaking space before `!`, `?`, `:` where a line could wrap;
+  wording helpers (plural, table list) in `src/lib/format.ts`.
 
 ### Tailwind v4 configuration
 CSS-first: there is no `tailwind.config.ts`. `postcss.config.js` loads
 `@tailwindcss/postcss` (it handles vendor prefixes, no autoprefixer), and
 `src/app/globals.css` holds `@import 'tailwindcss'` plus an `@theme` block with the
-design tokens. Choices that keep the v3 look (migration of 2026-11, verified by
-pixel comparison):
-- The default hues the app uses (gray, red, orange, yellow, green, blue, purple,
-  pink) are pinned to their v3 sRGB hex values in `@theme`; v4's OKLCH palette is
-  visibly more saturated. Add a hue's v3 values there before using a new hue.
-- Gradients use `bg-linear-to-r/srgb`: v4 interpolates in OKLab by default.
-- `space-x-*`/`space-y-*` now put the margin on every child but the last, so an
-  inline child (e.g. a `<Link>`) needs `block` for vertical spacing to apply.
+design tokens. v4 notes:
+- `space-x-*`/`space-y-*` put the margin on every child but the last; prefer
+  `flex`/`grid` with `gap-*`.
 - Buttons keep `cursor: pointer` through a base-layer rule (v4 default is `default`).
 - `hover:` variants only apply on devices that support hover (no sticky hover on
-  touch screens).
+  touch screens); the raw `.btn:hover` rules are wrapped in `@media (hover: hover)`
+  for the same reason.
 
 ## Data Persistence
 

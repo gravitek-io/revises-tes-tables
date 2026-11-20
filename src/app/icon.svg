@@ -1,0 +1,14 @@
+<!--
+  Favicon: a yellow sticker (gommette) with the ink multiplication sign, the
+  same sticker as on the home page. Drawn with shapes only (no font) so it
+  stays sharp at 16 px. Colors: the highlight and ink tokens of globals.css.
+  favicon.ico and apple-icon.png are rendered from this design.
+  XML rule: a comment must never contain two hyphens in a row.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <circle cx="32" cy="32" r="29" fill="#ffce3a"/>
+  <!-- Sticker thickness: darker crescent along the bottom edge. -->
+  <path d="M5.5 37a27 27 0 0 0 53 0a29 25 0 0 1-53 0z" fill="#000" fill-opacity=".14"/>
+  <circle cx="32" cy="32" r="29" fill="none" stroke="#1c2566" stroke-width="4"/>
+  <path d="M22 22l20 20M42 22L22 42" stroke="#1c2566" stroke-width="8.5" stroke-linecap="round"/>
+</svg>
