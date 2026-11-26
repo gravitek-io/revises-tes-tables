@@ -89,22 +89,6 @@ export default function RootLayout({
       className={`${grandstander.variable} ${andika.variable} ${playwrite.variable}`}
     >
       <body>
-        <Script
-          async
-          src="https://www.googletagmanager.com/gtag/js?id=G-NE650PZHBC"
-        />
-        <Script
-          id="google-analytics"
-          strategy="afterInteractive"
-          dangerouslySetInnerHTML={{
-            __html: `
-              window.dataLayer = window.dataLayer || [];
-              function gtag(){dataLayer.push(arguments);}
-              gtag('js', new Date());
-              gtag('config', 'G-NE650PZHBC');
-            `,
-          }}
-        />
         {/*
           Umami audience measurement (Gravitek VPS, cookieless, no consent
           banner needed). Script and collection go through the public host
