@@ -43,6 +43,9 @@ The application follows a client-side only architecture with local storage persi
 - `/game` - Interactive gameplay with real-time feedback
 - `/results` - Post-session analysis and encouragement (uses Suspense for useSearchParams)
 - `/stats` - Progress, « Mes progrès » (history, trend, bons points)
+- `/mentions-legales` - Legal notices (server component, static). Publisher details
+  mirror gravitek.io's notices; update the page (and its `LAST_UPDATED`) whenever the
+  hosting, the analytics setup or the data stored changes.
 
 ## Critical Implementation Details
 
@@ -109,6 +112,18 @@ All data stored in browser localStorage with 50-session limit:
 - Game settings (tables, question count)
 - Session history with detailed question tracking  
 - Computed statistics (performance trends, table-specific analytics)
+
+## Audience measurement
+
+Umami (Gravitek VPS), dedicated website for this app, loaded with `next/script` in
+`src/app/layout.tsx` from `https://stats.gravitek.io/s.js` (the public host; the
+tailnet address shown in the Umami dashboard must never be used in the app).
+- `data-domains` limits counting to `revises-tes-tables.gravitek.io`.
+- `data-exclude-search="true"` is mandatory: `/results?session=…` carries the whole
+  played session in its query string.
+- Cookieless and consent-free: never enable session replay or `umami.identify()`.
+  Custom events must not carry anything about the child (answers, scores tied to a
+  person).
 
 ## Deployment
 

@@ -58,6 +58,7 @@ npm start
 - **Jeu** (`/game`) - Interface de révision interactive
 - **Résultats** (`/results`) - Analyse des performances après chaque session
 - **Mes progrès** (`/stats`) - Historique détaillé, tendances et bons points
+- **Mentions légales** (`/mentions-legales`) - Éditeur, hébergement, mesure d'audience et données personnelles
 
 ## 🎨 Design
 
@@ -75,6 +76,19 @@ Les données sont stockées localement dans le navigateur :
 - Paramètres de configuration
 - Historique des sessions (50 dernières)
 - Statistiques globales et par table
+
+## 📊 Mesure d'audience
+
+L'audience est mesurée avec [Umami](https://umami.is), hébergé sur le VPS de
+Gravitek (website dédié « revises-tes-tables », séparé de gravitek.io). Umami ne
+dépose pas de cookie et ne collecte pas de donnée personnelle, d'où l'absence de
+bandeau de consentement.
+
+- Le script est chargé depuis `stats.gravitek.io` dans `src/app/layout.tsx`.
+- Seul le domaine de production est compté (`data-domains`) : le développement
+  local et les tests de fumée n'apparaissent pas dans les chiffres.
+- Les paramètres d'URL ne sont jamais envoyés (`data-exclude-search`) : la page
+  de résultats transporte toute la partie jouée dans son URL.
 
 ## 🔧 Scripts disponibles
 

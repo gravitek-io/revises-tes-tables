@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Play, Settings, TrendingUp, Building2, Mail, PartyPopper } from "lucide-react";
+import { Play, Settings, TrendingUp, Building2, Mail, PartyPopper, FileText } from "lucide-react";
 import { GameStorage } from "@/lib/storage";
 import { describeTables, pluralize } from "@/lib/format";
 import { GameSettings, SessionStats } from "@/types";
@@ -151,6 +151,13 @@ export default function HomePage() {
             <Mail className="h-4 w-4" aria-hidden />
             Nous contacter
           </a>
+          <Link
+            href="/mentions-legales"
+            className="inline-flex items-center gap-1.5 underline decoration-2 underline-offset-4 hover:text-pen"
+          >
+            <FileText className="h-4 w-4" aria-hidden />
+            Mentions légales
+          </Link>
         </div>
       </footer>
     </div>
