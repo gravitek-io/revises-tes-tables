@@ -105,6 +105,24 @@ export default function RootLayout({
             `,
           }}
         />
+        {/*
+          Umami audience measurement (Gravitek VPS, cookieless, no consent
+          banner needed). Script and collection go through the public host
+          stats.gravitek.io; the dashboard stays on the tailnet.
+          - data-domains: only the production host is counted, so local dev,
+            CI smoke tests and previews do not skew the figures.
+          - data-exclude-search: /results carries the whole played session
+            (answers, duration) in its query string; it must never be sent.
+          Do not enable session replay or identify(): they would leave the
+          consent-free scope.
+        */}
+        <Script
+          src="https://stats.gravitek.io/s.js"
+          data-website-id="f34d55e5-51b6-4ca8-ac11-3526f57a19cf"
+          data-domains="revises-tes-tables.gravitek.io"
+          data-exclude-search="true"
+          strategy="afterInteractive"
+        />
 
         <main className="page">{children}</main>
         <ToastContainer
