@@ -43,6 +43,9 @@ The application follows a client-side only architecture with local storage persi
 - `/game` - Interactive gameplay with real-time feedback
 - `/results` - Post-session analysis and encouragement (uses Suspense for useSearchParams)
 - `/stats` - Progress, « Mes progrès » (history, trend, bons points)
+- `/mentions-legales` - Legal notices (server component, static). Publisher details
+  mirror gravitek.io's notices; update the page (and its `LAST_UPDATED`) whenever the
+  hosting, the analytics setup or the data stored changes.
 
 ## Critical Implementation Details
 

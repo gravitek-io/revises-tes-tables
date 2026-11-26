@@ -58,6 +58,7 @@ npm start
 - **Jeu** (`/game`) - Interface de révision interactive
 - **Résultats** (`/results`) - Analyse des performances après chaque session
 - **Mes progrès** (`/stats`) - Historique détaillé, tendances et bons points
+- **Mentions légales** (`/mentions-legales`) - Éditeur, hébergement, mesure d'audience et données personnelles
 
 ## 🎨 Design
 
